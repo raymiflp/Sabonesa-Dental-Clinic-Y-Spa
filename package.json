@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "cd backend && npm install && npx prisma generate",
-    "start": "cd backend && node src/index.js",
+    "start": "cd backend && npx prisma db push && node src/index.js",
     "db:push": "cd backend && npx prisma db push",
     "db:seed": "cd backend && node prisma/seed.js"
   },
