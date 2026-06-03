@@ -1,7 +1,12 @@
 import { cachePut, cacheGet, queueAdd } from './lib/db';
 
-const API = 'http://localhost:3001/api';
-export const API_BASE = 'http://localhost:3001';
+const DEV_API = 'http://localhost:3001';
+const PROD_API = '/_/backend'; // Vercel Experimental Services route prefix
+
+const API_BASE = import.meta.env.DEV ? DEV_API : PROD_API;
+export { API_BASE };
+
+const API = `${API_BASE}/api`;
 
 function getAuthHeaders() {
   const token = localStorage.getItem('token');
