@@ -1,7 +1,7 @@
 import { cachePut, cacheGet, queueAdd } from './lib/db';
 
 const DEV_API = 'http://localhost:3001';
-const PROD_API = '/_/backend'; // Vercel Experimental Services route prefix
+const PROD_API = 'https://vibrant-commitment-production-3675.up.railway.app'; // Railway backend
 
 const API_BASE = import.meta.env.DEV ? DEV_API : PROD_API;
 export { API_BASE };
