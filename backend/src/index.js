@@ -51,7 +51,7 @@ app.use('/api/configuracion', authMiddleware, configuracionRoutes);
 app.use('/api/insumos', authMiddleware, insumosRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor en puerto ${PORT}`);
 
