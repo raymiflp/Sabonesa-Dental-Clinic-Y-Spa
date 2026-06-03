@@ -1,0 +1,47 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: Node.js (ESM) + Express 4 + Prisma (SQLite) backend; React 19 + Vite 8 + Tailwind CSS v4 + shadcn/ui (base-nova) frontend.
+  Architecture: REST API (port 3001) + SPA. Backend follows routes → controllers pattern. Frontend uses react-router-dom for page routing, custom fetch-based api.js client.
+  Testing: No test runner configured in either package. No test files found. No coverage tool.
+  Style: ESLint v10 (frontend only), no formatter, no type checker (plain JS with JSX).
+  Database: SQLite via Prisma with models: Paciente, HistorialClinico, Cita, Crediticio, Procedimiento, CategoriaProcedimiento, Presupuesto, Recordatorio, Configuracion.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  strict_tdd: false
+  runner: null
+  layers:
+    unit: { available: false, tool: null }
+    integration: { available: false, tool: null }
+    e2e: { available: false, tool: null }
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter: { available: true, command: "eslint .", scope: frontend }
+    type_checker: { available: false, command: null }
+    formatter: { available: false, command: null }

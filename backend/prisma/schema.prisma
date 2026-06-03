@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Paciente {
+  id          Int      @id @default(autoincrement())
+  nombres     String
+  apellidos   String
+  direccion   String?
+  noCasa      String?
+  sector      String?
+  telefono    String?
+  tieneWhatsapp Boolean @default(false)
+  ocupacion   String?
+  cedula      String?  @unique
+  estadoCivil String?
+  sexo        String?
+  edad        Int?
+  nivelEducativo String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  historialClinico HistorialClinico?
+  crediticios      Crediticio[]
+  citas            Cita[]
+  presupuestos     Presupuesto[]
+}
+
+model HistorialClinico {
+  id        Int      @id @default(autoincrement())
+  pacienteId Int     @unique
+  paciente  Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+
+  // Antecedentes Generales (sección 12)
+  antecedentes Json?
+
+  // Cuestionario General/Mujeres + Dental (sección 13,14,15)
+  cuestionarioGeneral Json?
+  cuestionarioDental  Json?
+
+  // Estado Actual (sección 16)
+  saludGeneral        String?
+  enfermedadPadece    String?
+  ultimaVisitaMedico  String?
+  porqueVisita        String?
+  dieta               String?
+  comentarios         String?
+
+  // Examen Facial (sección 17)
+  examenCara   String?
+  examenCuello String?
+  examenATM    String?
+
+  // Tejidos Blandos (sección 18)
+  tejidosBlandos Json?
+
+  // Anomalías Dentarias
+  anomaliasDentarias Json?
+
+  // Higiene Bucal
+  higieneBucal String?
+
+  // Diagnóstico Radiográfico
+  dxRadiografico String?
+
+  // Odontograma - estado de cada diente
+  odontograma Json?
+
+  // Fotos y radiografías
+  fotos Json?
+
+  // Presupuesto
+  presupuestoTexto String?
+
+  // Evolución y Observaciones
+  evolucion    String?
+  observaciones String?
+
+  // Agenda del Paciente (embebida en HC)
+  agendaPaciente Json?
+
+  // Recordatorio programado (periódico)
+  recordatorioProgramado Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cita {
+  id          Int      @id @default(autoincrement())
+  pacienteId  Int
+  paciente    Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  fecha       String   // "YYYY-MM-DD"
+  hora        String?  // "HH:MM"
+  procedimiento String?
+  estado      String   @default("pendiente") // pendiente, confirmada, realizada, cancelada
+  notas       String?
+  origen      String   @default("manual") // manual, automatico
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Crediticio {
+  id            Int      @id @default(autoincrement())
+  pacienteId    Int
+  paciente      Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  procedimiento String?
+  montoPagado   Float?
+  montoAbonado  Float?
+  descuento     Float?
+  fecha         String   // "YYYY-MM-DD"
+  createdAt     DateTime @default(now())
+}
+
+model CategoriaProcedimiento {
+  id           Int      @id @default(autoincrement())
+  nombre       String   @unique
+  descripcion  String?
+  createdAt    DateTime @default(now())
+
+  procedimientos         Procedimiento[]
+}
+
+model Procedimiento {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  categoriaId  Int
+  categoria    CategoriaProcedimiento @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  precioSugerido Float?
+  descripcion  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Presupuesto {
+  id          Int      @id @default(autoincrement())
+  pacienteId  Int
+  paciente    Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  fecha       String   // "YYYY-MM-DD"
+  items       Json?    // [{"procedimientoId": 1, "nombre": "...", "cantidad": 1, "precio": 100}]
+  montoTotal  Float?
+  estado      String   @default("pendiente") // pendiente, aprobado, rechazado
+  notas       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  email     String   @unique
+  password  String
+  rol       String   // 'admin', 'doctor', 'asistente'
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Insumo {
+  id            Int      @id @default(autoincrement())
+  nombre        String
+  descripcion   String?
+  cantidad      Int      @default(0)
+  precioUnitario Float?
+  proveedor     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Configuracion {
+  id    Int    @id @default(autoincrement())
+  clave String @unique
+  valor String
+}

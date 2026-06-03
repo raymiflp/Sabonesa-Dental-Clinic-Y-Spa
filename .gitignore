@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# WhatsApp Web session (credenciales de sesión)
+wa-session/
+
+# Environment variables
+.env
+.env.local
+
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Database
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+
+# OS files
+.DS_Store
+Thumbs.db
