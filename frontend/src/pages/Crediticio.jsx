@@ -31,7 +31,7 @@ export default function Crediticio() {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [pacientes, setPacientes] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0] });
+  const [form, setForm] = useState({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0], presupuestoId: '' });
   const [saving, setSaving] = useState(false);
   const [presupuestosPaciente, setPresupuestosPaciente] = useState([]);
   const [editingCrediticio, setEditingCrediticio] = useState(null);
@@ -132,10 +132,14 @@ export default function Crediticio() {
         await api.updateCrediticio(editingCrediticio.id, data);
       } else {
         await api.createCrediticio(data);
+        // Marcar el presupuesto como aceptado si se seleccionó uno
+        if (form.presupuestoId) {
+          await api.updatePresupuesto(parseInt(form.presupuestoId), { estado: 'aceptado' });
+        }
       }
       setDialogOpen(false);
       setEditingCrediticio(null);
-      setForm({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0] });
+      setForm({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0], presupuestoId: '' });
       await load();
     } catch (err) {
       alert('Error: ' + err.message);
@@ -432,7 +436,7 @@ export default function Crediticio() {
         setDialogOpen(open);
         if (!open) {
           setEditingCrediticio(null);
-          setForm({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0] });
+          setForm({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0], presupuestoId: '' });
         }
       }}>
         <DialogContent>
@@ -461,15 +465,25 @@ export default function Crediticio() {
               <div className="space-y-2 bg-indigo-50/50 rounded-lg p-3 border border-indigo-100">
                 <Label className="text-xs font-semibold text-indigo-700 flex items-center gap-1">
                   Presupuestos del paciente ({presupuestosPaciente.length})
+                  {form.presupuestoId && (
+                    <span className="ml-1 text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                      se marcará como aceptado
+                    </span>
+                  )}
                 </Label>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {presupuestosPaciente.map((p) => {
                     const items = p.items || [];
                     const sumaTotal = items.reduce((sum, it) => sum + (it.cantidad || 1) * (it.precio || 0), 0);
                     return (
-                      <div key={p.id} className="bg-white rounded border border-indigo-100 p-2">
+                      <div key={p.id} className={`bg-white rounded border p-2 ${form.presupuestoId === String(p.id) ? 'border-green-400 ring-1 ring-green-200' : 'border-indigo-100'}`}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold text-gray-500">{p.fecha}</span>
+                          <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
+                            {form.presupuestoId === String(p.id) && (
+                              <span className="text-green-600 text-[10px] font-bold">✓</span>
+                            )}
+                            {p.fecha}
+                          </span>
                           <span className="text-xs font-bold text-indigo-600">
                             RD$ {(p.montoTotal || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
                           </span>
@@ -481,7 +495,7 @@ export default function Crediticio() {
                                 key={i}
                                 type="button"
                                 className="w-full text-left text-xs px-2 py-1 rounded hover:bg-indigo-50 flex items-center justify-between transition-colors"
-                                onClick={() => setForm({ ...form, procedimiento: item.nombre, montoPagado: String(item.cantidad * item.precio) })}
+                                onClick={() => setForm({ ...form, procedimiento: item.nombre, montoPagado: String(item.cantidad * item.precio), presupuestoId: String(p.id) })}
                                 title="Usar este procedimiento"
                               >
                                 <span className="text-gray-700">{item.nombre} x{item.cantidad}</span>
@@ -494,7 +508,7 @@ export default function Crediticio() {
                                 className="w-full text-left text-xs px-2 py-1.5 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium flex items-center justify-center gap-1 transition-colors mt-1"
                                 onClick={() => {
                                   const nombres = items.map(it => it.nombre).join(', ');
-                                  setForm({ ...form, procedimiento: nombres, montoPagado: String(sumaTotal) });
+                                  setForm({ ...form, procedimiento: nombres, montoPagado: String(sumaTotal), presupuestoId: String(p.id) });
                                 }}
                                 title="Usar todos los procedimientos"
                               >
