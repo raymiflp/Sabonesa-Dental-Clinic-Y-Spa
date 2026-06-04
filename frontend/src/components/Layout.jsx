@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, CreditCard, Stethoscope, Package, Menu, Search, LogOut, ChevronRight, Home } from 'lucide-react';
+import { LayoutDashboard, Calendar, ClipboardList, CreditCard, Stethoscope, Package, Menu, Search, LogOut, ChevronRight, Home, Settings2 } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ const allNavItems = [
   { to: '/crediticio', label: 'Historial Crediticio', icon: CreditCard },
   { to: '/procedimientos', label: 'Procedimientos', icon: Stethoscope },
   { to: '/inventario', label: 'Inventario', icon: Package },
+  { to: '/configuracion', label: 'Configuración', icon: Settings2 },
 ];
 
 // Roles:

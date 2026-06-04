@@ -11,6 +11,7 @@ import Agenda from './pages/Agenda';
 import Crediticio from './pages/Crediticio';
 import Procedimientos from './pages/Procedimientos';
 import Inventario from './pages/Inventario';
+import Configuracion from './pages/Configuracion';
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/crediticio" element={<ProtectedRoute requiredRoles={['admin']}><Crediticio /></ProtectedRoute>} />
             <Route path="/procedimientos" element={<Procedimientos />} />
             <Route path="/inventario" element={<Inventario />} />
+            <Route path="/configuracion" element={<Configuracion />} />
           </Route>
         </Routes>
       </BrowserRouter>

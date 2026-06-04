@@ -17,8 +17,10 @@ import insumosRoutes from './routes/insumos.js';
 import configuracionRoutes from './routes/configuracion.js';
 import uploadRoutes from './routes/upload.js';
 import cloudinaryRoutes from './routes/cloudinary.js';
+import whatsappRoutes from './routes/whatsapp.js';
 import { waSession } from './whatsapp/wa-session.js';
 import { PrismaClient } from '@prisma/client';
+import { startCronJobs } from './services/cronService.js';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -76,6 +78,7 @@ app.use('/api/crediticio', authMiddleware, crediticioRoutes);
 app.use('/api/procedimientos', authMiddleware, procedimientosRoutes);
 app.use('/api/presupuestos', authMiddleware, presupuestosRoutes);
 app.use('/api/configuracion', authMiddleware, configuracionRoutes);
+app.use('/api/whatsapp', authMiddleware, whatsappRoutes);
 app.use('/api/insumos', authMiddleware, insumosRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
 app.use('/api/cloudinary', authMiddleware, cloudinaryRoutes);
@@ -93,8 +96,14 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Servidor en puerto ${PORT}`);
 
+  // Pasar prisma a waSession para persistencia en DB
+  waSession.setPrisma(prisma);
+
   // Iniciar sesión de WhatsApp Web (si el modo es 'web' o hay sesión guardada)
   iniciarWaSession(prisma);
+
+  // Iniciar cron job de recordatorios
+  startCronJobs(prisma);
 });
 
 async function iniciarWaSession(prisma) {

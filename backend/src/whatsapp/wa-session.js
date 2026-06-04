@@ -9,6 +9,32 @@ import qrcode from 'qrcode-terminal';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SESSION_DIR = path.join(__dirname, '..', '..', 'wa-session');
 
+/** Lee todos los archivos del session dir y los empaqueta como { nombreArchivo: base64 } */
+function backupSessionToObject() {
+  if (!fs.existsSync(SESSION_DIR)) return null;
+  const files = fs.readdirSync(SESSION_DIR);
+  const obj = {};
+  for (const f of files) {
+    const fp = path.join(SESSION_DIR, f);
+    if (fs.statSync(fp).isFile()) {
+      obj[f] = fs.readFileSync(fp).toString('base64');
+    }
+  }
+  return Object.keys(obj).length > 0 ? obj : null;
+}
+
+/** Escribe los archivos de sesión desde un objeto { nombreArchivo: base64 } */
+function restoreSessionFromObject(obj) {
+  if (!obj) return false;
+  if (!fs.existsSync(SESSION_DIR)) {
+    fs.mkdirSync(SESSION_DIR, { recursive: true });
+  }
+  for (const [name, content] of Object.entries(obj)) {
+    fs.writeFileSync(path.join(SESSION_DIR, name), Buffer.from(content, 'base64'));
+  }
+  return true;
+}
+
 /** Singleton que mantiene la conexión con WhatsApp Web */
 class WaSession {
   constructor() {
@@ -16,6 +42,48 @@ class WaSession {
     this.isConnected = false;
     this.phoneNumber = null;
     this._connecting = false;
+    this._lastQR = null;
+    this._prisma = null;
+  }
+
+  /** Asigna la instancia de Prisma para persistencia en DB */
+  setPrisma(prisma) {
+    this._prisma = prisma;
+  }
+
+  /** Guarda el backup de la sesión en PostgreSQL */
+  async _saveBackupToDB() {
+    if (!this._prisma) return;
+    try {
+      const backup = backupSessionToObject();
+      if (!backup) return;
+      await this._prisma.configuracion.upsert({
+        where: { clave: 'wa_session_backup' },
+        update: { valor: JSON.stringify(backup) },
+        create: { clave: 'wa_session_backup', valor: JSON.stringify(backup) },
+      });
+      console.log('[WA-SESSION] Backup de sesión guardado en DB');
+    } catch (err) {
+      console.error('[WA-SESSION] Error guardando backup en DB:', err.message);
+    }
+  }
+
+  /** Restaura el backup de la sesión desde PostgreSQL */
+  async _restoreBackupFromDB() {
+    if (!this._prisma) return false;
+    try {
+      const row = await this._prisma.configuracion.findUnique({
+        where: { clave: 'wa_session_backup' },
+      });
+      if (!row?.valor) return false;
+      const backup = JSON.parse(row.valor);
+      const restored = restoreSessionFromObject(backup);
+      if (restored) console.log('[WA-SESSION] Sesión restaurada desde DB');
+      return restored;
+    } catch (err) {
+      console.error('[WA-SESSION] Error restaurando desde DB:', err.message);
+      return false;
+    }
   }
 
   /**
@@ -33,10 +101,18 @@ class WaSession {
       fs.mkdirSync(SESSION_DIR, { recursive: true });
     }
 
+    // Si el filesystem está vacío pero hay backup en DB, restaurar
+    const tieneCredsFS = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
+    if (!tieneCredsFS) {
+      const restored = await this._restoreBackupFromDB();
+      if (restored) {
+        console.log('[WA-SESSION] Backup restaurado desde DB al filesystem');
+      }
+    }
+
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
 
-    // Si ya hay credenciales guardadas, no pedir QR
     const tieneSesion = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
     if (tieneSesion) {
       console.log('[WA-SESSION] Sesión guardada encontrada, conectando...');
@@ -48,23 +124,26 @@ class WaSession {
       version,
       browser: Browsers.windows('Chrome'),
       auth: state,
-      logger: pino({ level: 'silent' }), // silenciar logs internos
+      logger: pino({ level: 'silent' }),
       syncFullHistory: false,
       markOnlineOnConnect: true,
     });
 
     this.sock = sock;
 
-    // Guardar credenciales cuando se actualicen
-    sock.ev.on('creds.update', saveCreds);
+    // Guardar credenciales cuando se actualicen → también backup a DB
+    sock.ev.on('creds.update', async () => {
+      await saveCreds();
+      await this._saveBackupToDB();
+    });
 
     // Manejar eventos de conexión
     sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
-      // Si hay QR, lo mostramos en la terminal y lo emitimos
       if (qr) {
         this.isConnected = false;
         this.phoneNumber = null;
-        console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp (enlace Whatsapp → Dispositivos vinculados → Vincular dispositivo):');
+        this._lastQR = qr;
+        console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp:');
         qrcode.generate(qr, { small: false });
         if (onQR) onQR(qr);
       }
@@ -72,9 +151,12 @@ class WaSession {
       if (connection === 'open') {
         this.isConnected = true;
         this.phoneNumber = sock.user?.id?.split(':')[0] || 'desconocido';
+        this._lastQR = null; // ya no se necesita QR
         console.log(`[WA-SESSION] ✅ Conectado como ${this.phoneNumber}`);
         if (onStatus) onStatus(`conectado:${this.phoneNumber}`);
         this._connecting = false;
+        // Backup después de conectar exitosamente
+        this._saveBackupToDB();
       }
 
       if (connection === 'close') {
@@ -90,13 +172,23 @@ class WaSession {
             this.init({ onQR, onStatus });
           }, 5000);
         } else {
-          console.log('[WA-SESSION] Sesión cerrada. Eliminá la carpeta wa-session/ y reiniciá para escanear QR de nuevo.');
+          console.log('[WA-SESSION] Sesión cerrada (logged out). Backup eliminado.');
+          this._lastQR = null;
           this._connecting = false;
+          // Limpiar backup en DB si fue deslogueado
+          if (this._prisma) {
+            this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(() => {});
+          }
         }
       }
     });
 
     return sock;
+  }
+
+  /** Devuelve el último QR generado (para la API) */
+  getLastQR() {
+    return this._lastQR;
   }
 
   /** Devuelve el socket activo. Lanza error si no está conectado. */

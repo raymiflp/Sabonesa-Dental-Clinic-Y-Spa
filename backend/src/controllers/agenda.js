@@ -64,10 +64,21 @@ export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const oldCita = await req.prisma.cita.findUnique({ where: { id: Number(id) } });
     const cita = await req.prisma.cita.update({
       where: { id: Number(id) },
       data
     });
+
+    // Enviar notificación si cambió el estado (no esperar respuesta)
+    if (oldCita && data.estado && oldCita.estado !== data.estado) {
+      if (data.estado === 'confirmada') {
+        sendConfirmacionCita(req.prisma, cita.id).catch(() => {});
+      } else if (data.estado === 'cancelada') {
+        sendCancelacionCita(req.prisma, cita.id).catch(() => {});
+      }
+    }
+
     res.json(cita);
   } catch (error) {
     res.status(500).json({ error: error.message });

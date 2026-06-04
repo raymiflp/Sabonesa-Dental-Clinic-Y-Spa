@@ -139,4 +139,10 @@ export const api = {
   uploadCloudinary: (dataUrl) => request('/cloudinary/upload', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
   deleteCloudinary: (publicId) => request(`/cloudinary/${encodeURIComponent(publicId)}`, { method: 'DELETE' }),
   deleteCloudinaryByUrl: (url) => request('/cloudinary/delete-by-url', { method: 'POST', body: JSON.stringify({ url }) }),
+
+  // WhatsApp
+  getWhatsappStatus: () => request('/whatsapp/status'),
+  getWhatsappQr: () => request('/whatsapp/qr'),
+  updateWhatsappMode: (mode) => request('/whatsapp/mode', { method: 'PUT', body: JSON.stringify({ mode }) }),
+  disconnectWhatsapp: () => request('/whatsapp/disconnect', { method: 'POST' }),
 };

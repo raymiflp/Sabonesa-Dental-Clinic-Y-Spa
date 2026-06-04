@@ -1,0 +1,103 @@
+import { Router } from 'express';
+import { waSession } from '../whatsapp/wa-session.js';
+
+const router = Router();
+
+/**
+ * GET /api/whatsapp/status
+ * Retorna el estado actual de la conexión WhatsApp Web
+ */
+router.get('/status', async (req, res) => {
+  try {
+    const configs = await req.prisma.configuracion.findMany({
+      where: { clave: { in: ['whatsapp_provider_mode', 'recordatorio_habilitado'] } },
+    });
+    const cfg = {};
+    configs.forEach(c => { cfg[c.clave] = c.valor; });
+
+    res.json({
+      mode: cfg.whatsapp_provider_mode || 'wa',
+      connected: waSession.isActive(),
+      phoneNumber: waSession.phoneNumber || null,
+      hasQR: !!waSession.getLastQR(),
+      recordatorioHabilitado: cfg.recordatorio_habilitado === 'true',
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/whatsapp/qr
+ * Retorna el QR actual como data URL para mostrar en el frontend
+ */
+router.get('/qr', async (req, res) => {
+  try {
+    const qr = waSession.getLastQR();
+    if (!qr) {
+      return res.json({ qr: null, message: 'No hay QR disponible. ¿Ya está conectado?' });
+    }
+    // Devolver el raw QR string — el frontend genera el QR con librería
+    res.json({ qr, connected: waSession.isActive() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/whatsapp/mode
+ * Cambia el modo de proveedor WhatsApp
+ * Body: { mode: 'wa' | 'web' | 'twilio' | 'waba' }
+ */
+router.put('/mode', async (req, res) => {
+  try {
+    const { mode } = req.body;
+    const validModes = ['wa', 'web', 'twilio', 'waba'];
+    if (!validModes.includes(mode)) {
+      return res.status(400).json({ error: `Modo inválido. Usar: ${validModes.join(', ')}` });
+    }
+
+    await req.prisma.configuracion.upsert({
+      where: { clave: 'whatsapp_provider_mode' },
+      update: { valor: mode },
+      create: { clave: 'whatsapp_provider_mode', valor: mode },
+    });
+
+    // Si cambia a 'web', reiniciar sesión
+    if (mode === 'web') {
+      waSession._connecting = false;
+      waSession.init({ prisma: req.prisma }).catch(err => {
+        console.error('[WhatsApp] Error iniciando sesión web:', err.message);
+      });
+    }
+
+    res.json({ mode, success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/whatsapp/disconnect
+ * Desconecta la sesión de WhatsApp Web
+ */
+router.post('/disconnect', async (req, res) => {
+  try {
+    if (waSession.sock) {
+      waSession.sock.logout().catch(() => {});
+      waSession.sock = null;
+    }
+    waSession.isConnected = false;
+    waSession.phoneNumber = null;
+    waSession._lastQR = null;
+
+    // Limpiar backup en DB
+    await req.prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(() => {});
+
+    res.json({ success: true, message: 'Sesión desconectada' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+export default router;

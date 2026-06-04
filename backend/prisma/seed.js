@@ -460,6 +460,12 @@ async function seed() {
     { clave: 'clinica_nombre', valor: 'Betty Dental' },
     { clave: 'whatsapp_provider_mode', valor: 'wa' },
     { clave: 'whatsapp_fallback_mode', valor: 'on_error' },
+    { clave: 'recordatorio_habilitado', valor: 'false' },
+    { clave: 'recordatorio_hora', valor: '08:00' },
+    { clave: 'recordatorio_anticipacion_dias', valor: '1' },
+    { clave: 'plantilla_recordatorio', valor: 'Hola {nombre}, recordatorio: tienes una cita en {clinica} mañana a las {hora}. Te esperamos.' },
+    { clave: 'plantilla_confirmacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} a las {hora} ha sido confirmada. Gracias.' },
+    { clave: 'plantilla_cancelacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} ha sido cancelada. Para reagendar, contactanos.' },
   ];
   for (const cfg of configDefault) {
     await prisma.configuracion.upsert({

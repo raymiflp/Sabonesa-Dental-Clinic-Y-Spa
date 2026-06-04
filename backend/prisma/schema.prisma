@@ -103,6 +103,7 @@ model Cita {
   estado      String   @default("pendiente") // pendiente, confirmada, realizada, cancelada
   notas       String?
   origen      String   @default("manual") // manual, automatico
+  recordatorios Recordatorio[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -185,12 +186,15 @@ model Recordatorio {
   id           Int       @id @default(autoincrement())
   pacienteId   Int
   paciente     Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
-  tipo         String    // recordatorio_1m, recordatorio_6m
+  citaId       Int?
+  cita         Cita?     @relation(fields: [citaId], references: [id], onDelete: SetNull)
+  tipo         String    // recordatorio_1m, recordatorio_6m, recordatorio_cita, confirmacion_cita
   destinatario String    // 'paciente'
   telefono     String?
   mensaje      String?
   whatsappUrl  String?
-  estado       String    @default("pendiente") // pendiente, enviado, cancelado
+  errorMsg     String?
+  estado       String    @default("pendiente") // pendiente, enviado, fallido, cancelado
   enviadoEn    DateTime?
   createdAt    DateTime  @default(now())
 }

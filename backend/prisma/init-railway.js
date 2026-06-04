@@ -160,6 +160,9 @@ async function main() {
     { clave: 'recordatorio_hora', valor: '08:00' },
     { clave: 'recordatorio_anticipacion_dias', valor: '1' },
     { clave: 'backup_hora', valor: '23:00' },
+    { clave: 'plantilla_recordatorio', valor: 'Hola {nombre}, recordatorio: tienes una cita en {clinica} mañana a las {hora}. Te esperamos.' },
+    { clave: 'plantilla_confirmacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} a las {hora} ha sido confirmada. Gracias.' },
+    { clave: 'plantilla_cancelacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} ha sido cancelada. Para reagendar, contactanos.' },
   ];
 
   for (const cfg of defaultConfig) {
