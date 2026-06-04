@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Calendar, ClipboardList, CreditCard, Stethoscope, Package, Menu, Search, DollarSign, LogOut, ChevronRight, Home } from 'lucide-react';
-import PagoRapido from './PagoRapido';
+import { LayoutDashboard, Calendar, ClipboardList, CreditCard, Stethoscope, Package, Menu, Search, LogOut, ChevronRight, Home } from 'lucide-react';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -91,9 +91,6 @@ export default function Layout() {
   const navItems = roleNavMap[user?.rol] || allNavItems;
 
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
-
-  // Pago Rápido dialog
-  const [pagoRapidoOpen, setPagoRapidoOpen] = useState(false);
 
   // Global patient search
   const [searchQuery, setSearchQuery] = useState('');
@@ -271,19 +268,6 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
-
-      {/* Floating Pago Rápido button — solo admin y asistente */}
-      {user?.rol !== 'doctor' && (
-        <button
-          onClick={() => setPagoRapidoOpen(true)}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg flex items-center justify-center transition-transform hover:scale-110"
-          title="Pago Rápido"
-        >
-          <DollarSign className="w-6 h-6" />
-        </button>
-      )}
-
-      <PagoRapido open={pagoRapidoOpen} onOpenChange={setPagoRapidoOpen} />
 
       <PasswordChangeModal />
     </div>
