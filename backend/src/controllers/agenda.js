@@ -1,3 +1,4 @@
+import { sendConfirmacionCita, sendCancelacionCita } from '../services/recordatorioService.js';
 
 export const getAll = async (req, res) => {
   try {
@@ -53,6 +54,12 @@ export const create = async (req, res) => {
         origen: data.origen || 'manual'
       }
     });
+
+    // Si es una cita para hoy y está confirmada, enviar notificación inmediata
+    const hoy = new Date().toISOString().split('T')[0];
+    if (cita.fecha === hoy && cita.estado === 'confirmada') {
+      sendConfirmacionCita(req.prisma, cita.id).catch(() => {});
+    }
 
     res.status(201).json(cita);
   } catch (error) {

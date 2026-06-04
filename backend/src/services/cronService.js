@@ -14,9 +14,9 @@ export function startCronJobs(prisma) {
     return;
   }
 
-  console.log('[Cron] Iniciando job de recordatorios (cada 30 min)...');
+  console.log('[Cron] Iniciando job de recordatorios (cada 5 min)...');
 
-  _task = cron.schedule('*/30 * * * *', async () => {
+  _task = cron.schedule('*/5 * * * *', async () => {
     console.log('[Cron] Ejecutando checkAndSendReminders...');
     const result = await checkAndSendReminders(prisma);
     console.log('[Cron] Resultado:', JSON.stringify(result));
