@@ -14,7 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, CalendarDays, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, CalendarDays, Clock, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -53,6 +53,12 @@ export default function Agenda() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editingCita, setEditingCita] = useState(null);
+  const [cobroDialogOpen, setCobroDialogOpen] = useState(false);
+  const [cobroCita, setCobroCita] = useState(null);
+  const [cobroForm, setCobroForm] = useState({
+    procedimiento: '', pacienteNombre: '', pacienteId: '',
+    montoPagado: '', montoAbonado: '', descuento: '', fecha: formatDate(new Date()),
+  });
   const [procedimientos, setProcedimientos] = useState([]);
   const [procSearchOpen, setProcSearchOpen] = useState(false);
   const procSearchRef = useRef(null);
@@ -161,6 +167,35 @@ export default function Agenda() {
     }
   };
 
+  const openCobro = async (cita) => {
+    setCobroCita(cita);
+    const paciente = pacientes.find((p) => p.id === cita.pacienteId);
+    const pacienteNombre = paciente ? `${p.nombres} ${p.apellidos}` : '—';
+
+    // Try to get procedure default price from procedimientos
+    let montoPagado = '';
+    try {
+      const procs = await api.getProcedimientos();
+      const proc = (Array.isArray(procs) ? procs : []).find((p) => p.nombre === cita.procedimiento);
+      if (proc && proc.precioSugerido) {
+        montoPagado = proc.precioSugerido.toString();
+      }
+    } catch (err) {
+      // ignore — user can type the amount manually
+    }
+
+    setCobroForm({
+      procedimiento: cita.procedimiento || '',
+      pacienteNombre,
+      pacienteId: cita.pacienteId,
+      montoPagado,
+      montoAbonado: '',
+      descuento: '',
+      fecha: formatDate(new Date()),
+    });
+    setCobroDialogOpen(true);
+  };
+
   const handleEdit = (cita) => {
     setEditingCita(cita);
     setForm({
@@ -189,6 +224,26 @@ export default function Agenda() {
       toast.success('Cita eliminada exitosamente.');
     } catch (err) {
       toast.error(err.message);
+    }
+  };
+
+  const handleCobro = async () => {
+    if (!cobroCita) return;
+    try {
+      await api.createCrediticio({
+        pacienteId: cobroCita.pacienteId,
+        procedimiento: cobroForm.procedimiento || cobroCita.procedimiento,
+        montoPagado: cobroForm.montoPagado ? parseFloat(cobroForm.montoPagado) : null,
+        montoAbonado: cobroForm.montoAbonado ? parseFloat(cobroForm.montoAbonado) : null,
+        descuento: cobroForm.descuento ? parseFloat(cobroForm.descuento) : null,
+        fecha: cobroForm.fecha,
+      });
+      setCobroDialogOpen(false);
+      setCobroCita(null);
+      toast.success('Pago registrado exitosamente');
+      await load();
+    } catch (err) {
+      toast.error('Error al registrar pago: ' + err.message);
     }
   };
 
@@ -355,7 +410,13 @@ export default function Agenda() {
                         <Badge variant="outline" className={`text-[10px] ${c.origen === 'automatico' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
                           {c.origen === 'automatico' ? 'Auto' : 'Manual'}
                         </Badge>
-
+                        {c.estado === 'realizada' && (
+                          <Button size="sm" variant="outline" className="h-6 text-[11px] text-green-600 border-green-200 hover:bg-green-50 px-2"
+                            onClick={() => openCobro(c)}>
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            Cobrar ahora
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -468,6 +529,62 @@ export default function Agenda() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleSave} disabled={saving || !form.pacienteId || !form.fecha} className="bg-indigo-600 hover:bg-indigo-700 text-white">
               {saving ? 'Guardando...' : (editingCita ? 'Guardar Cambios' : 'Crear Cita')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Cobro */}
+      <Dialog open={cobroDialogOpen} onOpenChange={setCobroDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cobrar Procedimiento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Procedimiento</Label>
+                <p className="text-sm font-medium">{cobroForm.procedimiento}</p>
+              </div>
+              <div className="space-y-1">
+                <Label>Paciente</Label>
+                <p className="text-sm font-medium">{cobroForm.pacienteNombre}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Monto Pagado (RD$)</Label>
+                <Input type="number" step="0.01" value={cobroForm.montoPagado}
+                  onChange={(e) => setCobroForm({...cobroForm, montoPagado: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label>Monto Abonado (RD$)</Label>
+                <Input type="number" step="0.01" value={cobroForm.montoAbonado}
+                  onChange={(e) => setCobroForm({...cobroForm, montoAbonado: e.target.value})} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Descuento (%)</Label>
+                <Input type="number" min="0" max="100" value={cobroForm.descuento}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || (parseInt(val) >= 0 && parseInt(val) <= 100))
+                      setCobroForm({...cobroForm, descuento: val});
+                  }} placeholder="0" />
+              </div>
+              <div className="space-y-2">
+                <Label>Fecha</Label>
+                <Input type="date" value={cobroForm.fecha}
+                  onChange={(e) => setCobroForm({...cobroForm, fecha: e.target.value})} />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setCobroDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCobro} disabled={!cobroForm.montoPagado && !cobroForm.montoAbonado}
+              className="bg-green-600 hover:bg-green-700 text-white">
+              Registrar Pago
             </Button>
           </div>
         </DialogContent>
