@@ -162,6 +162,7 @@ export default function Agenda() {
     try {
       await api.updateCita(id, { estado: nuevoEstado });
       await load();
+      toast.success(`Cita marcada como ${nuevoEstado}`);
     } catch (err) {
       toast.error(err.message);
     }
