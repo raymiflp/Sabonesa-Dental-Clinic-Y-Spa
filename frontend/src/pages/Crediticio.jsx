@@ -16,7 +16,9 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, CalendarDays, DollarSign, FileDown } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import * as XLSX from 'xlsx';
 
 const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -36,6 +38,7 @@ export default function Crediticio() {
   const [presupuestosPaciente, setPresupuestosPaciente] = useState([]);
   const [editingCrediticio, setEditingCrediticio] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -142,7 +145,7 @@ export default function Crediticio() {
       setForm({ pacienteId: '', procedimiento: '', montoPagado: '', montoAbonado: '', descuento: '', fecha: new Date().toISOString().split('T')[0], presupuestoId: '' });
       await load();
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -161,9 +164,9 @@ export default function Crediticio() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este registro?')) return;
+  const handleDelete = (id) => {
     setDeleteTarget({ id });
+    setConfirmDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -172,9 +175,10 @@ export default function Crediticio() {
       await api.deleteCrediticio(deleteTarget.id);
       await load();
       setDeleteTarget(null);
-      alert('Registro eliminado exitosamente.');
+      setConfirmDeleteOpen(false);
+      toast.success('Registro eliminado exitosamente.');
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -191,7 +195,7 @@ export default function Crediticio() {
     });
 
     if (monthRecords.length === 0) {
-      alert(`No hay registros en ${nombreMes} ${año}`);
+      toast.info(`No hay registros en ${nombreMes} ${año}`);
       return;
     }
 
@@ -565,8 +569,18 @@ export default function Crediticio() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setDeleteTarget(null); }}
+        onConfirm={() => { setConfirmDeleteOpen(false); }}
+        title="Eliminar registro crediticio"
+        description="¿Estás seguro de eliminar este registro?"
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
+
       <PasswordConfirmDialog
-        open={!!deleteTarget}
+        open={!!deleteTarget && !confirmDeleteOpen}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Eliminar registro crediticio"
