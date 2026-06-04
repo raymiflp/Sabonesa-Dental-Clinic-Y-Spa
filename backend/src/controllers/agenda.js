@@ -71,6 +71,8 @@ export const update = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    // Convertir pacienteId a número si viene como string (desde el frontend)
+    if (data.pacienteId !== undefined) data.pacienteId = Number(data.pacienteId);
     const oldCita = await req.prisma.cita.findUnique({ where: { id: Number(id) } });
     const cita = await req.prisma.cita.update({
       where: { id: Number(id) },
