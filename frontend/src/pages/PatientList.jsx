@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Plus, Eye, Search, Stethoscope, MessageCircle, BadgeCheck, X, Pencil, Trash2 } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 
 const emptyPaciente = {
   nombres: '', apellidos: '', cedula: '', telefono: '', direccion: '',
@@ -29,6 +30,7 @@ export default function PatientList() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ ...emptyPaciente });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -86,9 +88,15 @@ export default function PatientList() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`¿Eliminar paciente "${name}" y todos sus datos (historial clínico, citas, créditos, presupuestos)? Esta acción no se puede deshacer.`)) return;
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deletePaciente(id);
+      await api.deletePaciente(deleteTarget.id);
       await load();
+      setDeleteTarget(null);
       alert('Paciente eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
@@ -322,6 +330,14 @@ export default function PatientList() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Eliminar paciente"
+        description={deleteTarget ? `Ingresa tu contraseña para eliminar a "${deleteTarget.name}".` : ''}
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import Odontograma from '@/components/Odontograma';
 import FotosSection from '@/components/FotosSection';
 import { ArrowLeft, Save, Plus, Pencil, Trash2, Loader2, MessageCircle, Phone, BadgeCheck, X, Calendar, FileDown, RefreshCw } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import { jsPDF } from 'jspdf';
 import { formatDateDDMMYYYY } from '@/utils/formatoFecha';
 
@@ -132,6 +133,8 @@ export default function HistorialClinico() {
   const [presupItem, setPresupItem] = useState({ procedimientoId: '', nombre: '', cantidad: 1, precio: 0 });
   const [presupuestos, setPresupuestos] = useState([]);
   const [editingPresupuesto, setEditingPresupuesto] = useState(null);
+  const [deleteTargetHC, setDeleteTargetHC] = useState(null);
+  const [deleteTargetPresup, setDeleteTargetPresup] = useState(null);
   const [procSearchOpen, setProcSearchOpen] = useState(false);
   const [citaProcSearchOpen, setCitaProcSearchOpen] = useState(false);
   const procSearchRef = useRef(null);
@@ -308,6 +311,10 @@ export default function HistorialClinico() {
 
   const handleDeleteHistorial = async () => {
     if (!confirm('¿Eliminar historial clínico completo? Esta acción no se puede deshacer.')) return;
+    setDeleteTargetHC(true);
+  };
+
+  const confirmDeleteHistorial = async () => {
     try {
       setSaving(true);
       await api.deleteHistorial(historial.id);
@@ -397,9 +404,15 @@ export default function HistorialClinico() {
 
   const deletePresupuesto = async (id) => {
     if (!confirm('¿Eliminar este presupuesto?')) return;
+    setDeleteTargetPresup({ id });
+  };
+
+  const confirmDeletePresup = async () => {
+    if (!deleteTargetPresup) return;
     try {
-      await api.deletePresupuesto(id);
+      await api.deletePresupuesto(deleteTargetPresup.id);
       loadPresupuestos();
+      setDeleteTargetPresup(null);
       alert('Presupuesto eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
@@ -1433,6 +1446,21 @@ export default function HistorialClinico() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTargetHC}
+        onOpenChange={() => setDeleteTargetHC(null)}
+        onConfirm={confirmDeleteHistorial}
+        title="Eliminar historial clínico"
+        description="Ingresa tu contraseña para eliminar este historial clínico."
+      />
+      <PasswordConfirmDialog
+        open={!!deleteTargetPresup}
+        onOpenChange={() => setDeleteTargetPresup(null)}
+        onConfirm={confirmDeletePresup}
+        title="Eliminar presupuesto"
+        description="Ingresa tu contraseña para eliminar este presupuesto."
+      />
     </div>
   );
 }

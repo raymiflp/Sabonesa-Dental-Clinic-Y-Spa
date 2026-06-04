@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, CalendarDays, Clock, DollarSign } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 
 const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -47,6 +48,7 @@ export default function Agenda() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ pacienteId: '', fecha: formatDate(new Date()), hora: '', procedimiento: '', notas: '', estado: 'pendiente' });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [editingCita, setEditingCita] = useState(null);
   const [cobroDialogOpen, setCobroDialogOpen] = useState(false);
   const [cobroCita, setCobroCita] = useState(null);
@@ -206,9 +208,15 @@ export default function Agenda() {
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta cita?')) return;
+    setDeleteTarget({ id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteCita(id);
+      await api.deleteCita(deleteTarget.id);
       await load();
+      setDeleteTarget(null);
       alert('Cita eliminada exitosamente.');
     } catch (err) {
       alert('Error: ' + err.message);
@@ -577,6 +585,14 @@ export default function Agenda() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Eliminar cita"
+        description="Ingresa tu contraseña para eliminar esta cita."
+      />
     </div>
   );
 }

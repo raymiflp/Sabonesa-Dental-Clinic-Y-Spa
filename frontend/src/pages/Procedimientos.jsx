@@ -11,6 +11,7 @@ import {
 import {
   Plus, Stethoscope, FolderPlus, Edit2, Trash2, DollarSign, ChevronDown, ChevronRight,
 } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 
 export default function Procedimientos() {
   const [categorias, setCategorias] = useState([]);
@@ -22,6 +23,7 @@ export default function Procedimientos() {
   const [newCategoria, setNewCategoria] = useState({ nombre: '', descripcion: '' });
   const [formProc, setFormProc] = useState({ nombre: '', categoriaId: '', precioSugerido: '', descripcion: '' });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = async () => {
     try {
@@ -85,9 +87,15 @@ export default function Procedimientos() {
 
   const handleDeleteProc = async (id, name) => {
     if (!confirm(`¿Eliminar procedimiento "${name}"?`)) return;
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteProcedimiento(id);
+      await api.deleteProcedimiento(deleteTarget.id);
       await load();
+      setDeleteTarget(null);
       alert('Procedimiento eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
@@ -262,6 +270,14 @@ export default function Procedimientos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Eliminar procedimiento"
+        description={deleteTarget ? `Ingresa tu contraseña para eliminar "${deleteTarget.name}".` : ''}
+      />
     </div>
   );
 }

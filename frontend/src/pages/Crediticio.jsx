@@ -16,6 +16,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, CalendarDays, DollarSign, FileDown } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import * as XLSX from 'xlsx';
 
 const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -34,6 +35,7 @@ export default function Crediticio() {
   const [saving, setSaving] = useState(false);
   const [presupuestosPaciente, setPresupuestosPaciente] = useState([]);
   const [editingCrediticio, setEditingCrediticio] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = async () => {
     try {
@@ -157,9 +159,15 @@ export default function Crediticio() {
 
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este registro?')) return;
+    setDeleteTarget({ id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteCrediticio(id);
+      await api.deleteCrediticio(deleteTarget.id);
       await load();
+      setDeleteTarget(null);
       alert('Registro eliminado exitosamente.');
     } catch (err) {
       alert('Error: ' + err.message);
@@ -535,6 +543,14 @@ export default function Crediticio() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Eliminar registro crediticio"
+        description="Ingresa tu contraseña para eliminar este registro."
+      />
     </div>
   );
 }

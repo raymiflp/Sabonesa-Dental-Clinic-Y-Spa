@@ -13,6 +13,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react';
+import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 
 const STOCK_COLORS = {
   empty: 'bg-red-100 text-red-700',
@@ -39,6 +40,7 @@ export default function Inventario() {
     proveedor: '',
   });
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const load = async () => {
     try {
@@ -100,9 +102,15 @@ export default function Inventario() {
 
   const handleDelete = async (id, name) => {
     if (!confirm(`¿Eliminar insumo "${name}"?`)) return;
+    setDeleteTarget({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.deleteInsumo(id);
+      await api.deleteInsumo(deleteTarget.id);
       await load();
+      setDeleteTarget(null);
       alert('Insumo eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
@@ -264,6 +272,14 @@ export default function Inventario() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <PasswordConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Eliminar insumo"
+        description={deleteTarget ? `Ingresa tu contraseña para eliminar "${deleteTarget.name}".` : ''}
+      />
     </div>
   );
 }
