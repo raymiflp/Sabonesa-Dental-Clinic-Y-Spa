@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, CalendarDays, Clock, DollarSign } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -49,6 +51,7 @@ export default function Agenda() {
   const [form, setForm] = useState({ pacienteId: '', fecha: formatDate(new Date()), hora: '', procedimiento: '', notas: '', estado: 'pendiente' });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editingCita, setEditingCita] = useState(null);
   const [cobroDialogOpen, setCobroDialogOpen] = useState(false);
   const [cobroCita, setCobroCita] = useState(null);
@@ -160,7 +163,7 @@ export default function Agenda() {
       await api.updateCita(id, { estado: nuevoEstado });
       await load();
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -206,9 +209,9 @@ export default function Agenda() {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar esta cita?')) return;
+  const handleDelete = (id) => {
     setDeleteTarget({ id });
+    setConfirmDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -217,9 +220,10 @@ export default function Agenda() {
       await api.deleteCita(deleteTarget.id);
       await load();
       setDeleteTarget(null);
-      alert('Cita eliminada exitosamente.');
+      setConfirmDeleteOpen(false);
+      toast.success('Cita eliminada exitosamente.');
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     }
   };
 
@@ -236,10 +240,10 @@ export default function Agenda() {
       });
       setCobroDialogOpen(false);
       setCobroCita(null);
-      alert('Pago registrado exitosamente');
+      toast.success('Pago registrado exitosamente');
       await load();
     } catch (err) {
-      alert('Error al registrar pago: ' + err.message);
+      toast.error('Error al registrar pago: ' + err.message);
     }
   };
 
@@ -257,7 +261,7 @@ export default function Agenda() {
       setForm({ pacienteId: '', fecha: formatDate(new Date()), hora: '', procedimiento: '', notas: '', estado: 'pendiente' });
       await load();
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     } finally {
       setSaving(false);
     }
@@ -586,8 +590,18 @@ export default function Agenda() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setDeleteTarget(null); }}
+        onConfirm={() => { setConfirmDeleteOpen(false); }}
+        title="Eliminar cita"
+        description="¿Estás seguro de eliminar esta cita?"
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
+
       <PasswordConfirmDialog
-        open={!!deleteTarget}
+        open={!!deleteTarget && !confirmDeleteOpen}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Eliminar cita"
