@@ -236,6 +236,9 @@ export default function Crediticio() {
     XLSX.writeFile(wb, `Crediticio_${nombreMes}_${año}.xlsx`);
   };
 
+  // Helper para mostrar nombre del paciente seleccionado
+  const pacienteSeleccionado = pacientes.find(p => String(p.id) === form.pacienteId);
+
   // Stats
   const totalPagado = records.reduce((s, r) => s + (r.montoPagado || 0), 0);
   const totalAbonado = records.reduce((s, r) => s + (r.montoAbonado || 0), 0);
@@ -440,7 +443,11 @@ export default function Crediticio() {
             <div className="space-y-2">
               <Label>Paciente *</Label>
               <Select value={form.pacienteId} onValueChange={(v) => setForm({ ...form, pacienteId: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar paciente..." /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar paciente...">
+                    {pacienteSeleccionado ? `${pacienteSeleccionado.nombres} ${pacienteSeleccionado.apellidos}` : ''}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {pacientes.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)}>
