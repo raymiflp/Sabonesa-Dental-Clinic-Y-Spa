@@ -160,6 +160,7 @@ export default function Crediticio() {
     try {
       await api.deleteCrediticio(id);
       await load();
+      alert('Registro eliminado exitosamente.');
     } catch (err) {
       alert('Error: ' + err.message);
     }

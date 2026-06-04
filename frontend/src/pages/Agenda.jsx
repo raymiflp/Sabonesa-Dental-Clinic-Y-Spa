@@ -209,6 +209,7 @@ export default function Agenda() {
     try {
       await api.deleteCita(id);
       await load();
+      alert('Cita eliminada exitosamente.');
     } catch (err) {
       alert('Error: ' + err.message);
     }

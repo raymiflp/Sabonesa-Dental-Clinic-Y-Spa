@@ -89,6 +89,7 @@ export default function PatientList() {
     try {
       await api.deletePaciente(id);
       await load();
+      alert('Paciente eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
     }

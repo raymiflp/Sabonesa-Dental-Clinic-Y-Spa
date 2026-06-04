@@ -400,6 +400,7 @@ export default function HistorialClinico() {
     try {
       await api.deletePresupuesto(id);
       loadPresupuestos();
+      alert('Presupuesto eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
     }

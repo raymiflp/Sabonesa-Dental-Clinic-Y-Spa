@@ -103,6 +103,7 @@ export default function Inventario() {
     try {
       await api.deleteInsumo(id);
       await load();
+      alert('Insumo eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
     }

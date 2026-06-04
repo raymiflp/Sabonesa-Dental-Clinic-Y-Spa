@@ -88,6 +88,7 @@ export default function Procedimientos() {
     try {
       await api.deleteProcedimiento(id);
       await load();
+      alert('Procedimiento eliminado exitosamente.');
     } catch (err) {
       alert('Error al eliminar: ' + err.message);
     }
