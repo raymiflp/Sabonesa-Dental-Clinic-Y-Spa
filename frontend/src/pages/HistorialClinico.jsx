@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Odontograma from '@/components/Odontograma';
 import FotosSection from '@/components/FotosSection';
-import { ArrowLeft, Save, Plus, Pencil, Trash2, Loader2, MessageCircle, Phone, BadgeCheck, X, Calendar, FileDown, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Pencil, Trash2, Loader2, MessageCircle, Phone, BadgeCheck, X, Calendar, DollarSign, FileDown, RefreshCw } from 'lucide-react';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import { jsPDF } from 'jspdf';
 import { formatDateDDMMYYYY } from '@/utils/formatoFecha';
@@ -228,6 +228,8 @@ export default function HistorialClinico() {
         fotos: (form.fotos || []).map(f => ({
           id: f.id,
           dataUrl: f.dataUrl,
+          url: f.url || '',
+          publicId: f.publicId || '',
           fecha: f.fecha,
           descripcion: f.descripcion || '',
         })),
@@ -687,17 +689,44 @@ export default function HistorialClinico() {
           return 'JPEG'; // default
         };
 
+        /** Convertir URL de Cloudinary a data URL (para PDF) */
+        const urlToDataUrl = async (url) => {
+          try {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+          } catch {
+            return null;
+          }
+        };
+
         const fotoImgW = (pw - ml * 2 - 8) / 2; // 2 columnas
         const fotoImgH = fotoImgW * 0.75;
         let fotosYPos = y;
+
+        // Obtener data URL para cada foto (desde Cloudinary URL o local)
+        const fotosDataUrls = await Promise.all(fotosList.map(async (foto) => {
+          if (foto.dataUrl && typeof foto.dataUrl === 'string' && foto.dataUrl.startsWith('data:image')) {
+            return foto.dataUrl; // legacy: ya está en base64
+          }
+          if (foto.url || foto.cloudinaryUrl) {
+            return await urlToDataUrl(foto.url || foto.cloudinaryUrl);
+          }
+          return null;
+        }));
+
         for (let i = 0; i < fotosList.length; i++) {
           const foto = fotosList[i];
+          const imgData = fotosDataUrls[i];
 
           try {
-            // Usar dataUrl directamente (guardada en la BD)
-            const imgData = foto.dataUrl;
-            const imgFormat = detectFormat(imgData || '');
             if (!imgData || typeof imgData !== 'string' || !imgData.startsWith('data:image')) continue;
+            const imgFormat = detectFormat(imgData);
 
             const col = i % 2;
             const row = Math.floor(i / 2);
@@ -852,6 +881,7 @@ export default function HistorialClinico() {
             <SelectTrigger className="w-full bg-white border-indigo-200 text-sm font-medium">
               <SelectValue>
                 {activeTab === 'agenda' && 'Agenda'}
+                {activeTab === 'presupuesto' && 'Presupuesto'}
                 {activeTab === 'antecedentes' && 'Antecedentes'}
                 {activeTab === 'cuestionarios' && 'Cuestionarios'}
                 {activeTab === 'estado' && 'Estado Actual'}
@@ -860,11 +890,11 @@ export default function HistorialClinico() {
                 {activeTab === 'evolucion' && 'Evolución'}
                 {activeTab === 'odontograma' && 'Odontograma'}
                 {activeTab === 'fotos' && 'Fotos / Rx'}
-                {activeTab === 'presupuesto' && 'Presupuesto'}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="agenda">Agenda</SelectItem>
+              <SelectItem value="presupuesto">💰 Presupuesto</SelectItem>
               <SelectItem value="antecedentes">Antecedentes</SelectItem>
               <SelectItem value="cuestionarios">Cuestionarios</SelectItem>
               <SelectItem value="estado">Estado Actual</SelectItem>
@@ -873,7 +903,6 @@ export default function HistorialClinico() {
               <SelectItem value="evolucion">Evolución</SelectItem>
               <SelectItem value="odontograma">Odontograma</SelectItem>
               <SelectItem value="fotos">Fotos / Rx</SelectItem>
-              <SelectItem value="presupuesto">Presupuesto</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -884,6 +913,10 @@ export default function HistorialClinico() {
             <Calendar className="w-3.5 h-3.5 mr-1" />
             Agenda
           </TabsTrigger>
+          <TabsTrigger value="presupuesto" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 data-[state=active]:border-emerald-600 text-xs">
+            <DollarSign className="w-3.5 h-3.5 mr-1" />
+            Presupuesto
+          </TabsTrigger>
           <TabsTrigger value="antecedentes" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Antecedentes</TabsTrigger>
           <TabsTrigger value="cuestionarios" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Cuestionarios</TabsTrigger>
           <TabsTrigger value="estado" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Estado Actual</TabsTrigger>
@@ -892,7 +925,6 @@ export default function HistorialClinico() {
           <TabsTrigger value="evolucion" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Evolución</TabsTrigger>
           <TabsTrigger value="odontograma" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Odontograma</TabsTrigger>
           <TabsTrigger value="fotos" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Fotos / Rx</TabsTrigger>
-          <TabsTrigger value="presupuesto" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Presupuesto</TabsTrigger>
         </TabsList>
 
         {/* Tab: Agenda del Paciente */}
@@ -1372,7 +1404,7 @@ export default function HistorialClinico() {
                 />
               </div>
               <Button variant="ghost" size="sm" onClick={addPresupItem} className="mt-2 text-indigo-600" disabled={!presupItem.nombre}>
-                + Agregar item
+                + Agregar procedimiento
               </Button>
             </div>
 

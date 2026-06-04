@@ -24,6 +24,7 @@ export default function Procedimientos() {
   const [formProc, setFormProc] = useState({ nombre: '', categoriaId: '', precioSugerido: '', descripcion: '' });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteCatTarget, setDeleteCatTarget] = useState(null);
 
   const load = async () => {
     try {
@@ -102,6 +103,17 @@ export default function Procedimientos() {
     }
   };
 
+  const confirmDeleteCat = async () => {
+    if (!deleteCatTarget) return;
+    try {
+      await api.deleteCategoria(deleteCatTarget.id);
+      await load();
+      setDeleteCatTarget(null);
+    } catch (err) {
+      alert('Error al eliminar categoría: ' + err.message);
+    }
+  };
+
   const handleSaveCategoria = async () => {
     if (!newCategoria.nombre) return;
     try {
@@ -155,15 +167,31 @@ export default function Procedimientos() {
                     {(cat.procedimientos || []).length} procedimientos
                   </Badge>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
-                  onClick={(e) => { e.stopPropagation(); openNewProc(cat.id); }}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
-                  Agregar
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                    onClick={(e) => { e.stopPropagation(); openNewProc(cat.id); }}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Agregar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50"
+                    title="Eliminar categoría"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const count = (cat.procedimientos || []).length;
+                      if (count > 0 && !confirm(`¿Eliminar "${cat.nombre}"?\n\n${count} procedimiento(s) serán eliminados también. ¿Continuar?`)) return;
+                      setDeleteCatTarget({ id: cat.id, name: cat.nombre });
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </CardHeader>
               {expanded[cat.id] && (
                 <CardContent className="px-5 pb-4 pt-0">
@@ -277,6 +305,14 @@ export default function Procedimientos() {
         onConfirm={confirmDelete}
         title="Eliminar procedimiento"
         description={deleteTarget ? `Ingresa tu contraseña para eliminar "${deleteTarget.name}".` : ''}
+      />
+
+      <PasswordConfirmDialog
+        open={!!deleteCatTarget}
+        onOpenChange={() => setDeleteCatTarget(null)}
+        onConfirm={confirmDeleteCat}
+        title="Eliminar categoría"
+        description={deleteCatTarget ? `Ingresa tu contraseña para eliminar "${deleteCatTarget.name}" y todos sus procedimientos.` : ''}
       />
     </div>
   );

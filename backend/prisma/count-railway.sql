@@ -1,0 +1,12 @@
+SELECT 'Paciente' as tabla, COUNT(*) as total FROM "Paciente"
+UNION ALL SELECT 'Usuario', COUNT(*) FROM "Usuario"
+UNION ALL SELECT 'Cita', COUNT(*) FROM "Cita"
+UNION ALL SELECT 'Crediticio', COUNT(*) FROM "Crediticio"
+UNION ALL SELECT 'HistorialClinico', COUNT(*) FROM "HistorialClinico"
+UNION ALL SELECT 'Procedimiento', COUNT(*) FROM "Procedimiento"
+UNION ALL SELECT 'CategoriaProcedimiento', COUNT(*) FROM "CategoriaProcedimiento"
+UNION ALL SELECT 'Insumo', COUNT(*) FROM "Insumo"
+UNION ALL SELECT 'Configuracion', COUNT(*) FROM "Configuracion"
+UNION ALL SELECT 'Presupuesto', COUNT(*) FROM "Presupuesto"
+UNION ALL SELECT 'Recordatorio', COUNT(*) FROM "Recordatorio"
+ORDER BY tabla;

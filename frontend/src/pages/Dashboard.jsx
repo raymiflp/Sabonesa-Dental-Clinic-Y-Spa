@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/api';
+import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,8 @@ function formatDate(d) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const esAdmin = user?.rol === 'admin';
   const [stats, setStats] = useState({ pacientes: 0, citasHoy: 0, citasPendientes: 0, totalCreditos: 0 });
   const [citasHoy, setCitasHoy] = useState([]);
   const [ultimosCreditos, setUltimosCreditos] = useState([]);
@@ -40,12 +43,19 @@ export default function Dashboard() {
     try {
       const hoy = formatDate(new Date());
 
-      const [pData, cData, citasData, creditosData] = await Promise.all([
+      // Solo admin carga datos financieros
+      const promises = [
         api.getPacientes(),
         api.getCitas({ fecha: hoy }),
         api.getCitas({}),
-        api.getAllCrediticio({}),
-      ]);
+      ];
+      if (esAdmin) {
+        promises.push(api.getAllCrediticio({}));
+      }
+
+      const results = await Promise.all(promises);
+      const [pData, cData, citasData] = results;
+      const creditosData = esAdmin ? results[3] : [];
 
       const pacientes = Array.isArray(pData) ? pData : [];
       const citasHoyArr = Array.isArray(cData) ? cData : [];
@@ -172,19 +182,21 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/crediticio')}>
-          <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-green-100 shrink-0">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Total Pagado</p>
-              <p className="text-2xl font-bold text-gray-900">
-                RD$ {stats.totalCreditos.toLocaleString('es-DO', { minimumFractionDigits: 0 })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        {esAdmin && (
+          <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/crediticio')}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-green-100 shrink-0">
+                <DollarSign className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Total Pagado</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  RD$ {stats.totalCreditos.toLocaleString('es-DO', { minimumFractionDigits: 0 })}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -290,49 +302,51 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Cobros Pendientes */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-500" />
-              Cobros Pendientes
-            </CardTitle>
-            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/crediticio')}>
-              Ver todos <ArrowRight className="w-3 h-3 ml-1" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {ultimosCreditos.length === 0 ? (
-              <p className="text-center py-6 text-gray-400 text-sm">No hay movimientos registrados</p>
-            ) : (
-              <div className="space-y-2">
-                {ultimosCreditos.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="p-2 rounded-full bg-green-100 shrink-0">
-                        <DollarSign className="w-4 h-4 text-green-600" />
+        {/* Cobros Pendientes — solo admin */}
+        {esAdmin && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                Cobros Pendientes
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/crediticio')}>
+                Ver todos <ArrowRight className="w-3 h-3 ml-1" />
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {ultimosCreditos.length === 0 ? (
+                <p className="text-center py-6 text-gray-400 text-sm">No hay movimientos registrados</p>
+              ) : (
+                <div className="space-y-2">
+                  {ultimosCreditos.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="p-2 rounded-full bg-green-100 shrink-0">
+                          <DollarSign className="w-4 h-4 text-green-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {r.paciente ? `${r.paciente.nombres} ${r.paciente.apellidos}` : `Paciente #${r.pacienteId}`}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{r.procedimiento || '—'} · {r.fecha}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {r.paciente ? `${r.paciente.nombres} ${r.paciente.apellidos}` : `Paciente #${r.pacienteId}`}
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-sm font-semibold text-green-600">
+                          {r.montoPagado ? `RD$ ${r.montoPagado.toLocaleString('es-DO', { minimumFractionDigits: 0 })}` : '—'}
                         </p>
-                        <p className="text-xs text-gray-500 truncate">{r.procedimiento || '—'} · {r.fecha}</p>
+                        <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 text-xs h-7 px-2" onClick={() => navigate('/crediticio')}>
+                          Ver en Crediticio <ArrowRight className="w-3 h-3 ml-0.5" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <p className="text-sm font-semibold text-green-600">
-                        {r.montoPagado ? `RD$ ${r.montoPagado.toLocaleString('es-DO', { minimumFractionDigits: 0 })}` : '—'}
-                      </p>
-                      <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 text-xs h-7 px-2" onClick={() => navigate('/crediticio')}>
-                        Ver en Crediticio <ArrowRight className="w-3 h-3 ml-0.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Acciones Rápidas */}
         <Card>
@@ -368,18 +382,20 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-500">Ver y gestionar citas del día</p>
                 </div>
               </Link>
-              <Link
-                to="/crediticio"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
-              >
-                <div className="p-2.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Crediticio</p>
-                  <p className="text-xs text-gray-500">Historial de pagos y cobros</p>
-                </div>
-              </Link>
+              {esAdmin && (
+                <Link
+                  to="/crediticio"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                >
+                  <div className="p-2.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
+                    <DollarSign className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Crediticio</p>
+                    <p className="text-xs text-gray-500">Historial de pagos y cobros</p>
+                  </div>
+                </Link>
+              )}
             </div>
           </CardContent>
         </Card>

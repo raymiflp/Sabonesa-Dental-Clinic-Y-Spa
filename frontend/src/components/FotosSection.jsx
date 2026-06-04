@@ -3,11 +3,13 @@
 import { useRef, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ImagePlus, Trash2, X, ZoomIn } from 'lucide-react';
+import { ImagePlus, Trash2, X, ZoomIn, Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { api } from '@/api';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const MAX_COMPRESS_WIDTH = 1200;
-const COMPRESS_QUALITY = 0.7; // JPEG quality 0-1
+const COMPRESS_QUALITY = 0.7;
 
 function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
@@ -18,7 +20,6 @@ function readFileAsDataURL(file) {
   });
 }
 
-/** Comprimir imagen a JPEG con tamaño máximo */
 function compressImage(dataUrl, maxWidth = MAX_COMPRESS_WIDTH, quality = COMPRESS_QUALITY) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -41,9 +42,30 @@ function compressImage(dataUrl, maxWidth = MAX_COMPRESS_WIDTH, quality = COMPRES
   });
 }
 
+/**
+ * Sube una imagen a Cloudinary vía backend.
+ * Retorna { url, publicId } o lanza error.
+ */
+async function uploadToCloudinary(dataUrl) {
+  const result = await api.uploadCloudinary(dataUrl);
+  return { url: result.url, publicId: result.publicId };
+}
+
+/**
+ * Obtiene la URL para mostrar una foto.
+ * Prioriza Cloudinary CDN, fallback a dataUrl local (legacy).
+ */
+function getFotoSrc(foto) {
+  if (foto.url) return foto.url;
+  if (foto.cloudinaryUrl) return foto.cloudinaryUrl;
+  if (foto.dataUrl) return foto.dataUrl;
+  return '';
+}
+
 export default function FotosSection({ fotos = [], onChange }) {
   const fileInputRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [uploading, setUploading] = useState(new Set()); // ids de fotos subiendo
 
   const handleFiles = useCallback(async (files) => {
     const fileArray = Array.from(files).filter(f =>
@@ -51,40 +73,84 @@ export default function FotosSection({ fotos = [], onChange }) {
     );
     if (fileArray.length === 0) return;
 
-    // Leer archivos
+    // 1. Leer archivos
     const rawDataUrls = await Promise.all(
       fileArray.map(f => readFileAsDataURL(f))
     );
 
-    // Comprimir imágenes (reduce tamaño 5-10x)
+    // 2. Comprimir (rápido, en el cliente)
     const compressed = await Promise.all(
       rawDataUrls.map(d => compressImage(d))
     );
 
-    // Crear objetos con dataUrl comprimida — SIN subir al servidor
-    const newFotos = compressed.map((dataUrl, i) => ({
-      id: Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-      dataUrl,
+    // 3. Crear objetos temporales con estado "subiendo"
+    const tempId = (i) => Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const tempFotos = compressed.map((dataUrl, i) => ({
+      id: tempId(i),
+      dataUrl, // para mostrar mientras sube
+      url: '',
+      publicId: '',
       fecha: new Date().toISOString(),
       descripcion: '',
+      uploading: true,
     }));
 
-    onChange([...fotos, ...newFotos]);
+    const allFotos = [...fotos, ...tempFotos];
+    onChange(allFotos);
+
+    // Marcar como subiendo
+    const uploadingIds = new Set(tempFotos.map(f => f.id));
+    setUploading(uploadingIds);
+
+    // 4. Subir cada una a Cloudinary
+    const finalFotos = [...fotos];
+    for (let i = 0; i < tempFotos.length; i++) {
+      const temp = tempFotos[i];
+      try {
+        const { url, publicId } = await uploadToCloudinary(compressed[i]);
+        finalFotos.push({
+          id: temp.id,
+          url,
+          publicId,
+          fecha: temp.fecha,
+          descripcion: '',
+        });
+      } catch (err) {
+        console.error('[FotosSection] Error uploading to Cloudinary:', err);
+        toast.error(`Error al subir imagen: ${err.message}`);
+        // Mantener la foto local como fallback
+        finalFotos.push({
+          id: temp.id,
+          dataUrl: temp.dataUrl,
+          fecha: temp.fecha,
+          descripcion: '',
+          uploadError: true,
+        });
+      }
+    }
+
+    // Quitar de subiendo
+    setUploading(new Set());
+    onChange(finalFotos);
 
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [fotos, onChange]);
 
-  const removeFoto = (id) => {
-    onChange(fotos.filter(f => f.id !== id));
+  const removeFoto = async (foto) => {
+    // Eliminar de Cloudinary si tiene publicId
+    if (foto.publicId) {
+      try {
+        await api.deleteCloudinary(foto.publicId);
+      } catch (err) {
+        console.error('[FotosSection] Error deleting from Cloudinary:', err);
+        // No bloquear, intentar eliminar igual del estado local
+      }
+    }
+    onChange(fotos.filter(f => f.id !== foto.id));
   };
 
   const updateDescripcion = (id, descripcion) => {
     onChange(fotos.map(f => f.id === id ? { ...f, descripcion } : f));
-  };
-
-  const getImgSrc = (foto) => {
-    if (foto.dataUrl) return foto.dataUrl;
-    return '';
   };
 
   return (
@@ -106,12 +172,19 @@ export default function FotosSection({ fotos = [], onChange }) {
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               className="border-indigo-300 text-indigo-700 hover:bg-indigo-100"
+              disabled={uploading.size > 0}
             >
-              <ImagePlus className="w-4 h-4 mr-1" />
-              Agregar Foto / Radiografía
+              {uploading.size > 0 ? (
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+              ) : (
+                <ImagePlus className="w-4 h-4 mr-1" />
+              )}
+              {uploading.size > 0
+                ? `Subiendo ${uploading.size} imagen(es)...`
+                : 'Agregar Foto / Radiografía'}
             </Button>
             <p className="text-xs text-gray-500">
-              Se comprime automáticamente (máx 50MB)
+              Se suben a Cloudinary con compresión automática
             </p>
           </div>
         </div>
@@ -129,35 +202,60 @@ export default function FotosSection({ fotos = [], onChange }) {
               <div key={foto.id} className="relative group">
                 {/* Thumbnail */}
                 <div
-                  className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer"
+                  className={`relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-gray-50 ${
+                    foto.uploading ? 'opacity-60' : 'cursor-pointer'
+                  }`}
                   onClick={() => {
-                    const src = getImgSrc(foto);
-                    if (src) setPreviewUrl(src);
+                    if (!foto.uploading) {
+                      const src = getFotoSrc(foto);
+                      if (src) setPreviewUrl(src);
+                    }
                   }}
                 >
+                  {/* Loading overlay */}
+                  {foto.uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10">
+                      <Loader2 className="w-8 h-8 text-white animate-spin" />
+                    </div>
+                  )}
+
+                  {/* Error badge */}
+                  {foto.uploadError && !foto.uploading && (
+                    <div className="absolute top-1 left-1 z-10">
+                      <div className="flex items-center gap-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded">
+                        <AlertCircle className="w-3 h-3" />
+                        Sin CDN
+                      </div>
+                    </div>
+                  )}
+
                   <img
-                    src={getImgSrc(foto)}
+                    src={getFotoSrc(foto)}
                     alt={foto.descripcion || 'Foto'}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                  {!foto.uploading && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Eliminar */}
-                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="w-6 h-6 rounded-full"
-                    onClick={() => removeFoto(foto.id)}
-                    title="Eliminar"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
+                {!foto.uploading && (
+                  <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="w-6 h-6 rounded-full"
+                      onClick={() => removeFoto(foto)}
+                      title="Eliminar"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
 
                 {/* Descripción */}
                 <input
@@ -165,8 +263,8 @@ export default function FotosSection({ fotos = [], onChange }) {
                   value={foto.descripcion}
                   onChange={(e) => updateDescripcion(foto.id, e.target.value)}
                   placeholder="Descripción..."
-                  className="w-full mt-1 text-xs border-0 border-b border-gray-200 focus:border-indigo-400 focus:ring-0 outline-none py-0.5 bg-transparent"
-                  disabled={false}
+                  disabled={foto.uploading}
+                  className="w-full mt-1 text-xs border-0 border-b border-gray-200 focus:border-indigo-400 focus:ring-0 outline-none py-0.5 bg-transparent disabled:opacity-50"
                 />
               </div>
             ))}

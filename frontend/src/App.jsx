@@ -28,7 +28,7 @@ export default function App() {
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/historial" element={<PatientList />} />
             <Route path="/historial/:pacienteId" element={<HistorialClinico />} />
-            <Route path="/crediticio" element={<Crediticio />} />
+            <Route path="/crediticio" element={<ProtectedRoute requiredRoles={['admin']}><Crediticio /></ProtectedRoute>} />
             <Route path="/procedimientos" element={<Procedimientos />} />
             <Route path="/inventario" element={<Inventario />} />
           </Route>

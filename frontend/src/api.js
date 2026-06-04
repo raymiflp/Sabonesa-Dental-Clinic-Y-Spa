@@ -116,6 +116,7 @@ export const api = {
   updateProcedimiento: (id, data) => request(`/procedimientos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProcedimiento: (id) => request(`/procedimientos/${id}`, { method: 'DELETE' }),
   createCategoria: (data) => request('/procedimientos/categorias', { method: 'POST', body: JSON.stringify(data) }),
+  deleteCategoria: (id) => request(`/procedimientos/categorias/${id}`, { method: 'DELETE' }),
 
   // Presupuestos
   getPresupuestos: (pacienteId) => request(`/presupuestos/paciente/${pacienteId}`),
@@ -133,4 +134,9 @@ export const api = {
   // Configuración
   getConfiguracion: () => request('/configuracion'),
   updateConfiguracion: (data) => request('/configuracion', { method: 'PUT', body: JSON.stringify(data) }),
+
+  // Cloudinary
+  uploadCloudinary: (dataUrl) => request('/cloudinary/upload', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
+  deleteCloudinary: (publicId) => request(`/cloudinary/${encodeURIComponent(publicId)}`, { method: 'DELETE' }),
+  deleteCloudinaryByUrl: (url) => request('/cloudinary/delete-by-url', { method: 'POST', body: JSON.stringify({ url }) }),
 };

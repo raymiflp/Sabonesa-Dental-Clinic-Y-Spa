@@ -19,12 +19,17 @@ const allNavItems = [
   { to: '/inventario', label: 'Inventario', icon: Package },
 ];
 
-// asistentes: only Agenda, Pacientes, Crediticio
+// Roles:
+//   admin:      todo
+//   doctor:     sin Crediticio (finanzas solo admin)
+//   asistente:  solo lo mínimo: agenda, pacientes, inventario, dashboard (sin finanzas)
 const roleNavMap = {
   admin: allNavItems,
-  doctor: allNavItems,
+  doctor: allNavItems.filter(item =>
+    !['/crediticio'].includes(item.to)
+  ),
   asistente: allNavItems.filter(item =>
-    ['/', '/agenda', '/historial', '/crediticio'].includes(item.to)
+    ['/', '/agenda', '/historial', '/inventario'].includes(item.to)
   ),
 };
 
@@ -267,14 +272,16 @@ export default function Layout() {
         </main>
       </div>
 
-      {/* Floating Pago Rápido button */}
-      <button
-        onClick={() => setPagoRapidoOpen(true)}
-        className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg flex items-center justify-center transition-transform hover:scale-110"
-        title="Pago Rápido"
-      >
-        <DollarSign className="w-6 h-6" />
-      </button>
+      {/* Floating Pago Rápido button — solo admin y asistente */}
+      {user?.rol !== 'doctor' && (
+        <button
+          onClick={() => setPagoRapidoOpen(true)}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-green-500 hover:bg-green-600 text-white shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+          title="Pago Rápido"
+        >
+          <DollarSign className="w-6 h-6" />
+        </button>
+      )}
 
       <PagoRapido open={pagoRapidoOpen} onOpenChange={setPagoRapidoOpen} />
 

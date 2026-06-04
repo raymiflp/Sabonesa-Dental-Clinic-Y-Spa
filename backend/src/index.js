@@ -16,6 +16,7 @@ import presupuestosRoutes from './routes/presupuestos.js';
 import insumosRoutes from './routes/insumos.js';
 import configuracionRoutes from './routes/configuracion.js';
 import uploadRoutes from './routes/upload.js';
+import cloudinaryRoutes from './routes/cloudinary.js';
 import { waSession } from './whatsapp/wa-session.js';
 import { PrismaClient } from '@prisma/client';
 
@@ -77,6 +78,7 @@ app.use('/api/presupuestos', authMiddleware, presupuestosRoutes);
 app.use('/api/configuracion', authMiddleware, configuracionRoutes);
 app.use('/api/insumos', authMiddleware, insumosRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
+app.use('/api/cloudinary', authMiddleware, cloudinaryRoutes);
 
 // Startup check: JWT_SECRET must be set in production
 if (!process.env.JWT_SECRET) {
