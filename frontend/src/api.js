@@ -130,10 +130,6 @@ export const api = {
   updateInsumo: (id, data) => request(`/insumos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteInsumo: (id) => request(`/insumos/${id}`, { method: 'DELETE' }),
 
-  // Upload
-  uploadFoto: (dataUrl) => request('/upload', { method: 'POST', body: JSON.stringify({ dataUrl }) }),
-  deleteFoto: (filename) => request(`/upload/${filename}`, { method: 'DELETE' }),
-
   // Configuración
   getConfiguracion: () => request('/configuracion'),
   updateConfiguracion: (data) => request('/configuracion', { method: 'PUT', body: JSON.stringify(data) }),

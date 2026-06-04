@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { api, API_BASE } from '@/api';
+import { api } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -222,38 +222,15 @@ export default function HistorialClinico() {
     try {
       setSaving(true);
 
-      // 0. Subir fotos pendientes (dataUrl sin url de servidor) — solo las que no estén ya subiéndose
-      const fotosActuales = [...(form.fotos || [])];
-      const fotosParaSubir = fotosActuales.filter(f => f.dataUrl && !f.url && !f.uploading);
-      if (fotosParaSubir.length > 0) {
-        console.log('[HC Save] subiendo', fotosParaSubir.length, 'fotos pendientes...');
-        for (let i = 0; i < fotosParaSubir.length; i++) {
-          const f = fotosParaSubir[i];
-          try {
-            const result = await api.uploadFoto(f.dataUrl);
-            const idx = fotosActuales.findIndex(x => x.id === f.id);
-            if (idx !== -1) {
-              fotosActuales[idx] = { ...f, dataUrl: undefined, url: result.url };
-            }
-          } catch (uploadErr) {
-            console.warn('[HC Save] error subiendo foto', f.id, uploadErr.message);
-          }
-        }
-        // Actualizar form con las URLs
-        updateField('fotos', fotosActuales);
-      }
-
       const payload = {
         pacienteId: parseInt(pacienteId),
         ...form,
-        fotos: fotosActuales
-          .filter(f => f.url) // excluir fotos sin URL (fallaron en subida o siguen subiendo)
-          .map(f => ({
-            id: f.id,
-            url: f.url,
-            fecha: f.fecha,
-            descripcion: f.descripcion || '',
-          })),
+        fotos: (form.fotos || []).map(f => ({
+          id: f.id,
+          dataUrl: f.dataUrl,
+          fecha: f.fecha,
+          descripcion: f.descripcion || '',
+        })),
       };
       // Debug
       console.log('[HC Save] cuestionarioDental:', JSON.stringify(form.cuestionarioDental));
@@ -710,17 +687,6 @@ export default function HistorialClinico() {
           return 'JPEG'; // default
         };
 
-        /** Descargar imagen del servidor y devolver data URL original */
-        const fetchAsDataUrl = async (url) => {
-          const resp = await fetch(url);
-          const blob = await resp.blob();
-          return new Promise((resolve) => {
-            const r = new FileReader();
-            r.onload = () => resolve(r.result);
-            r.readAsDataURL(blob);
-          });
-        };
-
         const fotoImgW = (pw - ml * 2 - 8) / 2; // 2 columnas
         const fotoImgH = fotoImgW * 0.75;
         let fotosYPos = y;
@@ -728,17 +694,10 @@ export default function HistorialClinico() {
           const foto = fotosList[i];
 
           try {
-            // Obtener data URL original (sin re-compresión)
-            let imgData = null;
-            let imgFormat = 'JPEG';
-            if (foto.url) {
-              imgData = await fetchAsDataUrl(API_BASE + foto.url);
-              imgFormat = detectFormat(imgData);
-            } else if (foto.dataUrl && typeof foto.dataUrl === 'string' && foto.dataUrl.startsWith('data:image')) {
-              imgData = foto.dataUrl;
-              imgFormat = detectFormat(imgData);
-            }
-            if (!imgData) continue;
+            // Usar dataUrl directamente (guardada en la BD)
+            const imgData = foto.dataUrl;
+            const imgFormat = detectFormat(imgData || '');
+            if (!imgData || typeof imgData !== 'string' || !imgData.startsWith('data:image')) continue;
 
             const col = i % 2;
             const row = Math.floor(i / 2);
@@ -1148,13 +1107,6 @@ export default function HistorialClinico() {
           <FotosSection
             fotos={form.fotos}
             onChange={(fotos) => updateField('fotos', fotos)}
-            unsavedIds={(() => {
-              if (!historial) return (form.fotos || []).map(f => f.id);
-              const savedIds = new Set((historial.fotos || []).map(f => f.id));
-              return (form.fotos || [])
-                .filter(f => f.url && !savedIds.has(f.id))
-                .map(f => f.id);
-            })()}
           />
         </TabsContent>
 
