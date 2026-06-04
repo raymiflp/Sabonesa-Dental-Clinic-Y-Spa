@@ -347,6 +347,93 @@ export default function Configuracion() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ---- Prueba de WhatsApp ---- */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-green-500" />
+            Probar Envío
+          </CardTitle>
+          <CardDescription>
+            Envía un mensaje de prueba para verificar que el sistema funciona
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <TestSender />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * Componente interno para enviar mensaje de prueba
+ */
+function TestSender() {
+  const [telefono, setTelefono] = useState('');
+  const [mensaje, setMensaje] = useState('🧪 Mensaje de prueba desde Sabonesa Dental Clinic Y Spa.');
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleTest = async () => {
+    if (!telefono) return;
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await api.testWhatsapp(telefono, mensaje);
+      setResult(res);
+      if (res.success) {
+        toast.success(res.waUrl ? `Link generado: ${res.waUrl}` : 'Mensaje enviado');
+      } else {
+        toast.error(res.error || 'Error al enviar');
+      }
+    } catch (err) {
+      toast.error('Error de conexión: ' + err.message);
+      setResult({ success: false, error: err.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Número de teléfono (ej: 8095550101)</Label>
+        <Input
+          placeholder="8095550101"
+          value={telefono}
+          onChange={(e) => setTelefono(e.target.value.replace(/[^\d]/g, ''))}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Mensaje de prueba</Label>
+        <textarea
+          className="w-full min-h-[60px] px-3 py-2 text-sm rounded-lg border border-input bg-background resize-y"
+          value={mensaje}
+          onChange={(e) => setMensaje(e.target.value)}
+          rows={2}
+        />
+      </div>
+      <Button onClick={handleTest} disabled={sending || !telefono}
+        className="bg-green-600 hover:bg-green-700 text-white">
+        {sending ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Enviando...</>
+          : 'Enviar mensaje de prueba'}
+      </Button>
+
+      {result && (
+        <div className={`p-3 rounded-lg text-sm ${result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <p className="font-medium">{result.success ? '✅ Enviado' : '❌ Fallido'}</p>
+          {result.waUrl && (
+            <a href={result.waUrl} target="_blank" rel="noopener noreferrer"
+              className="text-indigo-600 underline text-xs block mt-1">
+              Abrir link wa.me
+            </a>
+          )}
+          {result.error && <p className="text-xs mt-1">Error: {result.error}</p>}
+          {result.mode && <p className="text-xs text-gray-400 mt-1">Modo: {result.mode}</p>}
+        </div>
+      )}
     </div>
   );
 }

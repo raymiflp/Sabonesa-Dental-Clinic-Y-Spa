@@ -145,4 +145,5 @@ export const api = {
   getWhatsappQr: () => request('/whatsapp/qr'),
   updateWhatsappMode: (mode) => request('/whatsapp/mode', { method: 'PUT', body: JSON.stringify({ mode }) }),
   disconnectWhatsapp: () => request('/whatsapp/disconnect', { method: 'POST' }),
+  testWhatsapp: (telefono, mensaje) => request('/whatsapp/test', { method: 'POST', body: JSON.stringify({ telefono, mensaje }) }),
 };
