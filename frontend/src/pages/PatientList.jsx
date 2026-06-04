@@ -14,7 +14,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Plus, Eye, Search, Stethoscope, MessageCircle, BadgeCheck, X, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const emptyPaciente = {
   nombres: '', apellidos: '', cedula: '', telefono: '', direccion: '',
@@ -31,6 +33,7 @@ export default function PatientList() {
   const [form, setForm] = useState({ ...emptyPaciente });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -87,8 +90,8 @@ export default function PatientList() {
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`¿Eliminar paciente "${name}" y todos sus datos (historial clínico, citas, créditos, presupuestos)? Esta acción no se puede deshacer.`)) return;
     setDeleteTarget({ id, name });
+    setConfirmDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -97,9 +100,10 @@ export default function PatientList() {
       await api.deletePaciente(deleteTarget.id);
       await load();
       setDeleteTarget(null);
-      alert('Paciente eliminado exitosamente.');
+      setConfirmDeleteOpen(false);
+      toast.success('Paciente eliminado exitosamente.');
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      toast.error('Error al eliminar: ' + err.message);
     }
   };
 
@@ -118,7 +122,7 @@ export default function PatientList() {
       setDialogOpen(false);
       await load();
     } catch (err) {
-      alert('Error al guardar: ' + err.message);
+      toast.error('Error al guardar: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -331,8 +335,17 @@ export default function PatientList() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setDeleteTarget(null); }}
+        onConfirm={() => { setConfirmDeleteOpen(false); }}
+        title="Eliminar paciente"
+        description={deleteTarget ? `¿Estás seguro de eliminar a "${deleteTarget.name}" y todos sus datos (historial clínico, citas, créditos, presupuestos)? Esta acción no se puede deshacer.` : ''}
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteTarget}
+        open={!!deleteTarget && !confirmDeleteOpen}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Eliminar paciente"

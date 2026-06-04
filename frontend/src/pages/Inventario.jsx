@@ -13,7 +13,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Package, Plus, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 const STOCK_COLORS = {
   empty: 'bg-red-100 text-red-700',
@@ -41,6 +43,7 @@ export default function Inventario() {
   });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -94,15 +97,15 @@ export default function Inventario() {
       setDialogOpen(false);
       await load();
     } catch (err) {
-      alert('Error al guardar insumo: ' + err.message);
+      toast.error('Error al guardar insumo: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id, name) => {
-    if (!confirm(`¿Eliminar insumo "${name}"?`)) return;
     setDeleteTarget({ id, name });
+    setConfirmDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -111,9 +114,10 @@ export default function Inventario() {
       await api.deleteInsumo(deleteTarget.id);
       await load();
       setDeleteTarget(null);
-      alert('Insumo eliminado exitosamente.');
+      setConfirmDeleteOpen(false);
+      toast.success('Insumo eliminado exitosamente.');
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      toast.error('Error al eliminar: ' + err.message);
     }
   };
 
@@ -273,8 +277,17 @@ export default function Inventario() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setDeleteTarget(null); }}
+        onConfirm={() => { setConfirmDeleteOpen(false); }}
+        title="Eliminar insumo"
+        description={deleteTarget ? `¿Estás seguro de eliminar el insumo "${deleteTarget.name}"?` : ''}
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteTarget}
+        open={!!deleteTarget && !confirmDeleteOpen}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Eliminar insumo"

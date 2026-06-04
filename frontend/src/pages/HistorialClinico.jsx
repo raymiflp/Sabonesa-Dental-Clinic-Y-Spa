@@ -20,7 +20,9 @@ import { Badge } from '@/components/ui/badge';
 import Odontograma from '@/components/Odontograma';
 import FotosSection from '@/components/FotosSection';
 import { ArrowLeft, Save, Plus, Pencil, Trash2, Loader2, MessageCircle, Phone, BadgeCheck, X, Calendar, DollarSign, FileDown, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { jsPDF } from 'jspdf';
 import { formatDateDDMMYYYY } from '@/utils/formatoFecha';
 
@@ -134,7 +136,11 @@ export default function HistorialClinico() {
   const [presupuestos, setPresupuestos] = useState([]);
   const [editingPresupuesto, setEditingPresupuesto] = useState(null);
   const [deleteTargetHC, setDeleteTargetHC] = useState(null);
+  const [confirmDeleteHCOpen, setConfirmDeleteHCOpen] = useState(false);
   const [deleteTargetPresup, setDeleteTargetPresup] = useState(null);
+  const [confirmDeletePresupOpen, setConfirmDeletePresupOpen] = useState(false);
+  const [agendarConfirmOpen, setAgendarConfirmOpen] = useState(false);
+  const [agendarPresupuestoData, setAgendarPresupuestoData] = useState(null);
   const [procSearchOpen, setProcSearchOpen] = useState(false);
   const [citaProcSearchOpen, setCitaProcSearchOpen] = useState(false);
   const procSearchRef = useRef(null);
@@ -280,17 +286,17 @@ export default function HistorialClinico() {
       }
 
       await load();
-      alert('Historial clínico guardado exitosamente.');
+      toast.success('Historial clínico guardado exitosamente.');
     } catch (err) {
-      alert('Error al guardar: ' + err.message);
+      toast.error('Error al guardar: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteHistorial = async () => {
-    if (!confirm('¿Eliminar historial clínico completo? Esta acción no se puede deshacer.')) return;
     setDeleteTargetHC(true);
+    setConfirmDeleteHCOpen(true);
   };
 
   const confirmDeleteHistorial = async () => {
@@ -299,7 +305,7 @@ export default function HistorialClinico() {
       await api.deleteHistorial(historial.id);
       navigate('/');
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      toast.error('Error al eliminar: ' + err.message);
       setSaving(false);
     }
   };
@@ -375,15 +381,15 @@ export default function HistorialClinico() {
       setEditingPresupuesto(null);
       setPresupForm({ fecha: new Date().toISOString().split('T')[0], items: [], notas: '' });
       loadPresupuestos();
-      alert(editingPresupuesto ? 'Presupuesto actualizado exitosamente.' : 'Presupuesto guardado exitosamente.');
+      toast.success(editingPresupuesto ? 'Presupuesto actualizado exitosamente.' : 'Presupuesto guardado exitosamente.');
     } catch (err) {
-      alert('Error al guardar presupuesto: ' + err.message);
+      toast.error('Error al guardar presupuesto: ' + err.message);
     }
   };
 
   const deletePresupuesto = async (id) => {
-    if (!confirm('¿Eliminar este presupuesto?')) return;
     setDeleteTargetPresup({ id });
+    setConfirmDeletePresupOpen(true);
   };
 
   const confirmDeletePresup = async () => {
@@ -392,9 +398,10 @@ export default function HistorialClinico() {
       await api.deletePresupuesto(deleteTargetPresup.id);
       loadPresupuestos();
       setDeleteTargetPresup(null);
-      alert('Presupuesto eliminado exitosamente.');
+      setConfirmDeletePresupOpen(false);
+      toast.success('Presupuesto eliminado exitosamente.');
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      toast.error('Error al eliminar: ' + err.message);
     }
   };
 
@@ -413,14 +420,20 @@ export default function HistorialClinico() {
       await api.updatePresupuesto(id, { estado: nuevoEstado });
       loadPresupuestos();
     } catch (err) {
-      alert('Error al cambiar estado: ' + err.message);
+      toast.error('Error al cambiar estado: ' + err.message);
     }
   };
 
-  const agendarPresupuesto = async (presupuesto) => {
-    if (!confirm(`¿Agendar citas para los ${presupuesto.items?.length || 0} procedimientos de este presupuesto?`)) return;
+  const agendarPresupuesto = (presupuesto) => {
+    setAgendarPresupuestoData(presupuesto);
+    setAgendarConfirmOpen(true);
+  };
+
+  const confirmAgendarPresupuesto = async () => {
+    if (!agendarPresupuestoData) return;
+    setAgendarConfirmOpen(false);
     try {
-      const items = presupuesto.items || [];
+      const items = agendarPresupuestoData.items || [];
       let creadas = 0;
       for (const item of items) {
         await api.createCita({
@@ -429,15 +442,15 @@ export default function HistorialClinico() {
           hora: null,
           procedimiento: item.nombre,
           estado: 'pendiente',
-          notas: `Generado del presupuesto del ${presupuesto.fecha}`,
+          notas: `Generado del presupuesto del ${agendarPresupuestoData.fecha}`,
           origen: 'presupuesto',
         });
         creadas++;
       }
-      alert(`${creadas} cita${creadas !== 1 ? 's' : ''} creada${creadas !== 1 ? 's' : ''}. Ve a Agenda para ajustar las fechas.`);
+      toast.success(`${creadas} cita${creadas !== 1 ? 's' : ''} creada${creadas !== 1 ? 's' : ''}. Ve a Agenda para ajustar las fechas.`);
       loadPresupuestos();
     } catch (err) {
-      alert('Error al agendar: ' + err.message);
+      toast.error('Error al agendar: ' + err.message);
     }
   };
 
@@ -775,7 +788,7 @@ export default function HistorialClinico() {
 
       pdf.save(`HC_${paciente.nombres}_${paciente.apellidos}.pdf`);
     } catch (err) {
-      alert('Error al generar PDF: ' + err.message);
+      toast.error('Error al generar PDF: ' + err.message);
     }
   };
 
@@ -1431,19 +1444,48 @@ export default function HistorialClinico() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteHCOpen}
+        onOpenChange={(v) => { setConfirmDeleteHCOpen(v); if (!v) setDeleteTargetHC(null); }}
+        onConfirm={() => { setConfirmDeleteHCOpen(false); }}
+        title="Eliminar historial clínico"
+        description="¿Estás seguro de eliminar el historial clínico completo? Esta acción no se puede deshacer."
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteTargetHC}
+        open={!!deleteTargetHC && !confirmDeleteHCOpen}
         onOpenChange={() => setDeleteTargetHC(null)}
         onConfirm={confirmDeleteHistorial}
         title="Eliminar historial clínico"
         description="Ingresa tu contraseña para eliminar este historial clínico."
       />
+
+      <ConfirmDialog
+        open={confirmDeletePresupOpen}
+        onOpenChange={(v) => { setConfirmDeletePresupOpen(v); if (!v) setDeleteTargetPresup(null); }}
+        onConfirm={() => { setConfirmDeletePresupOpen(false); }}
+        title="Eliminar presupuesto"
+        description="¿Estás seguro de eliminar este presupuesto?"
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteTargetPresup}
+        open={!!deleteTargetPresup && !confirmDeletePresupOpen}
         onOpenChange={() => setDeleteTargetPresup(null)}
         onConfirm={confirmDeletePresup}
         title="Eliminar presupuesto"
         description="Ingresa tu contraseña para eliminar este presupuesto."
+      />
+
+      <ConfirmDialog
+        open={agendarConfirmOpen}
+        onOpenChange={setAgendarConfirmOpen}
+        onConfirm={confirmAgendarPresupuesto}
+        title="Agendar citas"
+        description={`¿Agendar citas para los ${agendarPresupuestoData?.items?.length || 0} procedimientos de este presupuesto?`}
+        confirmText="Sí, agendar"
+        variant="confirm"
       />
     </div>
   );

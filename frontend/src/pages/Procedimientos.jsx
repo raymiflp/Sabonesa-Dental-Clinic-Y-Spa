@@ -11,7 +11,9 @@ import {
 import {
   Plus, Stethoscope, FolderPlus, Edit2, Trash2, DollarSign, ChevronDown, ChevronRight,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function Procedimientos() {
   const [categorias, setCategorias] = useState([]);
@@ -24,7 +26,9 @@ export default function Procedimientos() {
   const [formProc, setFormProc] = useState({ nombre: '', categoriaId: '', precioSugerido: '', descripcion: '' });
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [deleteCatTarget, setDeleteCatTarget] = useState(null);
+  const [confirmDeleteCatOpen, setConfirmDeleteCatOpen] = useState(false);
 
   const load = async () => {
     try {
@@ -80,15 +84,15 @@ export default function Procedimientos() {
       setDialogOpen(false);
       await load();
     } catch (err) {
-      alert('Error al guardar procedimiento: ' + err.message);
+      toast.error('Error al guardar procedimiento: ' + err.message);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteProc = async (id, name) => {
-    if (!confirm(`¿Eliminar procedimiento "${name}"?`)) return;
     setDeleteTarget({ id, name });
+    setConfirmDeleteOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -97,9 +101,10 @@ export default function Procedimientos() {
       await api.deleteProcedimiento(deleteTarget.id);
       await load();
       setDeleteTarget(null);
-      alert('Procedimiento eliminado exitosamente.');
+      setConfirmDeleteOpen(false);
+      toast.success('Procedimiento eliminado exitosamente.');
     } catch (err) {
-      alert('Error al eliminar: ' + err.message);
+      toast.error('Error al eliminar: ' + err.message);
     }
   };
 
@@ -109,8 +114,10 @@ export default function Procedimientos() {
       await api.deleteCategoria(deleteCatTarget.id);
       await load();
       setDeleteCatTarget(null);
+      setConfirmDeleteCatOpen(false);
+      toast.success('Categoría eliminada exitosamente.');
     } catch (err) {
-      alert('Error al eliminar categoría: ' + err.message);
+      toast.error('Error al eliminar categoría: ' + err.message);
     }
   };
 
@@ -123,7 +130,7 @@ export default function Procedimientos() {
       setNewCategoria({ nombre: '', descripcion: '' });
       await load();
     } catch (err) {
-      alert('Error al crear categoría: ' + err.message);
+      toast.error('Error al crear categoría: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -184,9 +191,8 @@ export default function Procedimientos() {
                     title="Eliminar categoría"
                     onClick={(e) => {
                       e.stopPropagation();
-                      const count = (cat.procedimientos || []).length;
-                      if (count > 0 && !confirm(`¿Eliminar "${cat.nombre}"?\n\n${count} procedimiento(s) serán eliminados también. ¿Continuar?`)) return;
-                      setDeleteCatTarget({ id: cat.id, name: cat.nombre });
+                      setDeleteCatTarget({ id: cat.id, name: cat.nombre, count: (cat.procedimientos || []).length });
+                      setConfirmDeleteCatOpen(true);
                     }}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -299,16 +305,34 @@ export default function Procedimientos() {
         </DialogContent>
       </Dialog>
 
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={(v) => { setConfirmDeleteOpen(v); if (!v) setDeleteTarget(null); }}
+        onConfirm={() => { setConfirmDeleteOpen(false); }}
+        title="Eliminar procedimiento"
+        description={deleteTarget ? `¿Estás seguro de eliminar el procedimiento "${deleteTarget.name}"?` : ''}
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteTarget}
+        open={!!deleteTarget && !confirmDeleteOpen}
         onOpenChange={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
         title="Eliminar procedimiento"
         description={deleteTarget ? `Ingresa tu contraseña para eliminar "${deleteTarget.name}".` : ''}
       />
 
+      <ConfirmDialog
+        open={confirmDeleteCatOpen}
+        onOpenChange={(v) => { setConfirmDeleteCatOpen(v); if (!v) setDeleteCatTarget(null); }}
+        onConfirm={() => { setConfirmDeleteCatOpen(false); }}
+        title="Eliminar categoría"
+        description={deleteCatTarget ? `¿Estás seguro de eliminar la categoría "${deleteCatTarget.name}"? ${deleteCatTarget.count > 0 ? `\n${deleteCatTarget.count} procedimiento(s) serán eliminados también.` : ''}` : ''}
+        confirmText="Sí, eliminar"
+        variant="danger"
+      />
       <PasswordConfirmDialog
-        open={!!deleteCatTarget}
+        open={!!deleteCatTarget && !confirmDeleteCatOpen}
         onOpenChange={() => setDeleteCatTarget(null)}
         onConfirm={confirmDeleteCat}
         title="Eliminar categoría"
