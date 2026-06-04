@@ -1,7 +1,8 @@
 // Sync Manager — monitors online/offline, processes write queue
 import { queueGetAll, queueRemove, getPendingCount } from './db';
+import { API_BASE } from '../api';
 
-const API = 'http://localhost:3001/api';
+const API = `${API_BASE}/api`;
 
 function getAuthHeaders() {
   const token = localStorage.getItem('token');

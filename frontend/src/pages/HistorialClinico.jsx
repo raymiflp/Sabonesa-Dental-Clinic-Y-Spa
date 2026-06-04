@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api, API_BASE } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +116,7 @@ const defaultHC = {
 
 export default function HistorialClinico() {
   const { pacienteId } = useParams();
+  const navigate = useNavigate();
   const [paciente, setPaciente] = useState(null);
   const [historial, setHistorial] = useState(null);
   const [form, setForm] = useState({ ...defaultHC });
@@ -301,6 +302,18 @@ export default function HistorialClinico() {
     } catch (err) {
       alert('Error al guardar: ' + err.message);
     } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteHistorial = async () => {
+    if (!confirm('¿Eliminar historial clínico completo? Esta acción no se puede deshacer.')) return;
+    try {
+      setSaving(true);
+      await api.deleteHistorial(historial.id);
+      navigate('/');
+    } catch (err) {
+      alert('Error al eliminar: ' + err.message);
       setSaving(false);
     }
   };
@@ -850,6 +863,11 @@ export default function HistorialClinico() {
           <Button onClick={handleSave} disabled={saving} size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 sm:h-9">
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> <span className="hidden sm:inline">Guardar</span></>}
           </Button>
+          {historial?.id && (
+            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50 h-8 sm:h-9" onClick={handleDeleteHistorial}>
+              <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </Button>
+          )}
         </div>
       </div>
 

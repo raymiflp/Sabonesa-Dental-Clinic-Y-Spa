@@ -300,15 +300,19 @@ async function seed() {
   await prisma.insumo.deleteMany();
   await prisma.usuario.deleteMany();
 
-  // Crear usuarios por defecto
+  // Crear usuarios por defecto (idempotent: upsert by email)
   console.log('👤 Creando usuarios por defecto...');
   const defaultUsers = [
-    { nombre: 'Admin Betty', email: 'admin@betty.com', password: await bcrypt.hash('admin123', 10), rol: 'admin' },
-    { nombre: 'Dr. Rodríguez', email: 'doctor@betty.com', password: await bcrypt.hash('doctor123', 10), rol: 'doctor' },
-    { nombre: 'Asistente Betty', email: 'asistente@betty.com', password: await bcrypt.hash('asistente123', 10), rol: 'asistente' },
+    { nombre: 'Admin Betty', email: 'admin@betty.com', password: await bcrypt.hash('admin123', 10), rol: 'admin', passwordChanged: false },
+    { nombre: 'Dr. Rodríguez', email: 'doctor@betty.com', password: await bcrypt.hash('doctor123', 10), rol: 'doctor', passwordChanged: false },
+    { nombre: 'Asistente Betty', email: 'asistente@betty.com', password: await bcrypt.hash('asistente123', 10), rol: 'asistente', passwordChanged: false },
   ];
   for (const user of defaultUsers) {
-    await prisma.usuario.create({ data: user });
+    await prisma.usuario.upsert({
+      where: { email: user.email },
+      update: { password: user.password, passwordChanged: user.passwordChanged, rol: user.rol, nombre: user.nombre, activo: true },
+      create: user,
+    });
     console.log(`  ✅ ${user.nombre} (${user.rol})`);
   }
 

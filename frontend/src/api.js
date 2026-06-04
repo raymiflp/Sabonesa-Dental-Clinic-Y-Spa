@@ -1,9 +1,11 @@
 import { cachePut, cacheGet, queueAdd } from './lib/db';
 
 const DEV_API = 'http://localhost:3001';
-const PROD_API = 'https://vibrant-commitment-production-3675.up.railway.app'; // Railway backend
+const PROD_API = 'https://amusing-fulfillment-production-1144.up.railway.app'; // Railway backend
 
-const API_BASE = import.meta.env.DEV ? DEV_API : PROD_API;
+// VITE_API_URL env var overrides everything; fall back to DEV/PROD logic
+const API_BASE = import.meta.env.VITE_API_URL
+  || (import.meta.env.DEV ? DEV_API : PROD_API);
 export { API_BASE };
 
 const API = `${API_BASE}/api`;
@@ -78,6 +80,7 @@ export const api = {
   login: (email, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   getMe: () => request('/auth/me'),
+  changePassword: (currentPassword, newPassword) => request('/auth/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) }),
 
   // Pacientes
   getPacientes: () => request('/pacientes'),
@@ -90,6 +93,7 @@ export const api = {
   getHistorial: (pacienteId) => request(`/historial-clinico/paciente/${pacienteId}`),
   saveHistorial: (data) => request('/historial-clinico', { method: 'POST', body: JSON.stringify(data) }),
   updateHistorial: (id, data) => request(`/historial-clinico/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteHistorial: (id) => request(`/historial-clinico/${id}`, { method: 'DELETE' }),
 
   // Agenda
   getCitas: (params) => request(`/agenda?${new URLSearchParams(params)}`),

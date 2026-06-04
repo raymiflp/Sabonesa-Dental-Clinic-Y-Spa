@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { api } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -112,15 +113,10 @@ export default function Dashboard() {
       setCobroCita(null);
       await loadDashboardData();
     } catch (err) {
-      alert('Error: ' + err.message);
+      toast.error(err.message);
     } finally {
       setCobroSaving(false);
     }
-  };
-
-  const getPacienteName = (id) => {
-    // We need patients for lookup - let's fetch on mount
-    return '...';
   };
 
   if (loading) {

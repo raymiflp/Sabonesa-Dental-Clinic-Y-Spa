@@ -19,3 +19,12 @@ backend/prisma/dev.db-journal
 # OS files
 .DS_Store
 Thumbs.db
+
+.vercel
+
+# Temp scripts
+set-railway-vars.js
+set-db-url.js
+set-railway-startcmd.js
+prisma/truncate-all.sql
+prisma/reset-admin.*

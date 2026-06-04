@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
+import SyncIndicator from './SyncIndicator';
+import PasswordChangeModal from './PasswordChangeModal';
 
 const allNavItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -201,6 +203,8 @@ export default function Layout() {
           </button>
           <div className="text-sm text-gray-500 font-medium shrink-0 hidden sm:block">Sabonesa Dental Clinic Y Spa</div>
 
+          <SyncIndicator />
+
           {/* Global search */}
           <div className="relative flex-1 max-w-md mx-auto" ref={searchRef}>
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -273,6 +277,8 @@ export default function Layout() {
       </button>
 
       <PagoRapido open={pagoRapidoOpen} onOpenChange={setPagoRapidoOpen} />
+
+      <PasswordChangeModal />
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
@@ -20,7 +22,32 @@ import { PrismaClient } from '@prisma/client';
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
+// --- Security Middleware ---
+
+// Helmet: security headers
+app.use(helmet());
+
+// Global rate limit: 100 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiadas solicitudes, intente de nuevo más tarde' },
+});
+app.use(globalLimiter);
+
+// Auth-specific rate limit (stricter): 20 requests per 15 minutes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Demasiados intentos de inicio de sesión' },
+});
+
+// CORS: restrict to frontend origin
+const corsOrigin = process.env.CORS_ORIGIN || process.env.VITE_API_URL || 'http://localhost:5173';
+app.use(cors({ origin: corsOrigin, credentials: true }));
+
 app.use(express.json({ limit: '50mb' }));
 
 // Servir archivos estáticos (imágenes, etc.)
@@ -34,8 +61,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Auth routes (no auth required)
-app.use('/api/auth', authRoutes);
+// Auth routes (no auth required, with stricter rate limit)
+app.use('/api/auth', authLimiter, authRoutes);
 
 // Health check (no auth required)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -50,6 +77,15 @@ app.use('/api/presupuestos', authMiddleware, presupuestosRoutes);
 app.use('/api/configuracion', authMiddleware, configuracionRoutes);
 app.use('/api/insumos', authMiddleware, insumosRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
+
+// Startup check: JWT_SECRET must be set in production
+if (!process.env.JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('FATAL: JWT_SECRET no está configurado en producción');
+    process.exit(1);
+  }
+  console.warn('ADVERTENCIA: JWT_SECRET no configurado, usando fallback de desarrollo');
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

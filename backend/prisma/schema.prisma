@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Paciente {
@@ -30,6 +30,7 @@ model Paciente {
   crediticios      Crediticio[]
   citas            Cita[]
   presupuestos     Presupuesto[]
+  recordatorios    Recordatorio[]
 }
 
 model HistorialClinico {
@@ -152,14 +153,15 @@ model Presupuesto {
 }
 
 model Usuario {
-  id        Int      @id @default(autoincrement())
-  nombre    String
-  email     String   @unique
-  password  String
-  rol       String   // 'admin', 'doctor', 'asistente'
-  activo    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  nombre          String
+  email           String   @unique
+  password        String
+  rol             String   // 'admin', 'doctor', 'asistente'
+  activo          Boolean  @default(true)
+  passwordChanged Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Insumo {
@@ -177,4 +179,18 @@ model Configuracion {
   id    Int    @id @default(autoincrement())
   clave String @unique
   valor String
+}
+
+model Recordatorio {
+  id           Int       @id @default(autoincrement())
+  pacienteId   Int
+  paciente     Paciente  @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  tipo         String    // recordatorio_1m, recordatorio_6m
+  destinatario String    // 'paciente'
+  telefono     String?
+  mensaje      String?
+  whatsappUrl  String?
+  estado       String    @default("pendiente") // pendiente, enviado, cancelado
+  enviadoEn    DateTime?
+  createdAt    DateTime  @default(now())
 }

@@ -8,9 +8,9 @@ async function main() {
 
   // Crear usuarios por defecto si no existen
   const defaultUsers = [
-    { nombre: 'Admin Betty', email: 'admin@betty.com', password: 'admin123', rol: 'admin' },
-    { nombre: 'Dr. Rodríguez', email: 'doctor@betty.com', password: 'doctor123', rol: 'doctor' },
-    { nombre: 'Asistente Betty', email: 'asistente@betty.com', password: 'asistente123', rol: 'asistente' },
+    { nombre: 'Admin Betty', email: 'admin@betty.com', password: 'admin123', rol: 'admin', passwordChanged: false },
+    { nombre: 'Dr. Rodríguez', email: 'doctor@betty.com', password: 'doctor123', rol: 'doctor', passwordChanged: false },
+    { nombre: 'Asistente Betty', email: 'asistente@betty.com', password: 'asistente123', rol: 'asistente', passwordChanged: false },
   ];
 
   for (const user of defaultUsers) {
@@ -20,7 +20,16 @@ async function main() {
       await prisma.usuario.create({ data: { ...user, password: hashed } });
       console.log(`  ✅ Usuario creado: ${user.email} (${user.rol})`);
     } else {
-      console.log(`  ⏭️  Usuario ya existe: ${user.email}`);
+      // Ensure passwordChanged field is set for existing users
+      if (existing.passwordChanged === null || existing.passwordChanged === undefined) {
+        await prisma.usuario.update({
+          where: { email: user.email },
+          data: { passwordChanged: false },
+        });
+        console.log(`  🔄 Usuario actualizado: ${user.email} (passwordChanged field)`);
+      } else {
+        console.log(`  ⏭️  Usuario ya existe: ${user.email}`);
+      }
     }
   }
 

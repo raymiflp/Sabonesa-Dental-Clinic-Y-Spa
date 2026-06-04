@@ -13,7 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Plus, Eye, Search, Stethoscope, MessageCircle, BadgeCheck, X, Pencil } from 'lucide-react';
+import { Plus, Eye, Search, Stethoscope, MessageCircle, BadgeCheck, X, Pencil, Trash2 } from 'lucide-react';
 
 const emptyPaciente = {
   nombres: '', apellidos: '', cedula: '', telefono: '', direccion: '',
@@ -82,6 +82,16 @@ export default function PatientList() {
       nivelEducativo: paciente.nivelEducativo || '',
     });
     setDialogOpen(true);
+  };
+
+  const handleDelete = async (id, name) => {
+    if (!confirm(`¿Eliminar paciente "${name}" y todos sus datos (historial clínico, citas, créditos, presupuestos)? Esta acción no se puede deshacer.`)) return;
+    try {
+      await api.deletePaciente(id);
+      await load();
+    } catch (err) {
+      alert('Error al eliminar: ' + err.message);
+    }
   };
 
   const handleSave = async () => {
@@ -199,6 +209,14 @@ export default function PatientList() {
                         onClick={(e) => { e.stopPropagation(); openEdit(p); }}
                       >
                         <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                        onClick={(e) => { e.stopPropagation(); handleDelete(p.id, `${p.nombres} ${p.apellidos}`); }}
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>

@@ -31,6 +31,18 @@ export const create = async (req, res) => {
   }
 };
 
+export const remove = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await req.prisma.historialClinico.delete({
+      where: { id: Number(id) }
+    });
+    res.json({ message: 'Historial clínico eliminado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
