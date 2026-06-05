@@ -288,7 +288,58 @@ function elegirProcedimiento(catMap, idx) {
 }
 
 async function seed() {
-  console.log('🗑️  Limpiando base de datos...');
+  // Verificar si ya hay datos (proteccion para produccion)
+  const existingPacientes = await prisma.paciente.count();
+  const existingProcs = await prisma.procedimiento.count();
+  const existingConfig = await prisma.configuracion.count();
+
+  if (existingPacientes > 0) {
+    console.log('📌 Base de datos ya tiene datos. Solo asegurando config y procedimientos...');
+
+    // Solo asegurar que existan configs basicas
+    const configDefault = [
+      { clave: 'doctor_nombre', valor: 'Dr. Rodríguez' },
+      { clave: 'doctor_telefono', valor: '18095551234' },
+      { clave: 'clinica_nombre', valor: 'Sabonesa Dental Clinic Y Spa' },
+      { clave: 'whatsapp_provider_mode', valor: 'wa' },
+      { clave: 'whatsapp_fallback_mode', valor: 'on_error' },
+      { clave: 'recordatorio_habilitado', valor: 'false' },
+      { clave: 'recordatorio_hora', valor: '08:00' },
+      { clave: 'recordatorio_anticipacion_dias', valor: '1' },
+      { clave: 'plantilla_recordatorio', valor: 'Hola {nombre}, recordatorio: tienes una cita en {clinica} mañana a las {hora}. Te esperamos.' },
+      { clave: 'plantilla_confirmacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} a las {hora} ha sido confirmada. Gracias.' },
+      { clave: 'plantilla_cancelacion', valor: 'Hola {nombre}, tu cita en {clinica} del {fecha} ha sido cancelada. Para reagendar, contactanos.' },
+    ];
+    for (const cfg of configDefault) {
+      await prisma.configuracion.upsert({
+        where: { clave: cfg.clave },
+        update: {}, // no sobrescribir valores existentes
+        create: cfg,
+      });
+    }
+
+    // Asegurar categorias y procedimientos base si no existen
+    if (existingProcs === 0) {
+      let totalProcs = 0;
+      for (const cat of categorias) {
+        const categoria = await prisma.categoriaProcedimiento.create({
+          data: { nombre: cat.nombre, descripcion: '' },
+        });
+        for (const proc of cat.procedimientos) {
+          await prisma.procedimiento.create({
+            data: { nombre: proc.nombre, precioSugerido: proc.precio, categoriaId: categoria.id },
+          });
+          totalProcs++;
+        }
+      }
+      console.log(`  ✅ ${categorias.length} categorías, ${totalProcs} procedimientos creados`);
+    }
+
+    console.log('✅ Seed completado (modo preservar datos)');
+    return;
+  }
+
+  console.log('🗑️  Base de datos vacía — sembrando datos demo...');
   await prisma.recordatorio.deleteMany();
   await prisma.presupuesto.deleteMany();
   await prisma.crediticio.deleteMany();
@@ -452,12 +503,12 @@ async function seed() {
     console.log(`  ✅ ${i + 1}. ${p.nombres} ${p.apellidos} — ${intervalo === 1 ? '1 mes' : '6 meses'} — ${p.tieneWhatsapp ? '📱 WhatsApp' : '📵 No WhatsApp'} — ${cantCreditos} créditos`);
   }
 
-  // Configuración por defecto
+  // Configuración por defecto (solo crear si no existe)
   console.log('⚙️  Creando configuración...');
   const configDefault = [
     { clave: 'doctor_nombre', valor: 'Dr. Rodríguez' },
     { clave: 'doctor_telefono', valor: '18095551234' },
-    { clave: 'clinica_nombre', valor: 'Betty Dental' },
+    { clave: 'clinica_nombre', valor: 'Sabonesa Dental Clinic Y Spa' },
     { clave: 'whatsapp_provider_mode', valor: 'wa' },
     { clave: 'whatsapp_fallback_mode', valor: 'on_error' },
     { clave: 'recordatorio_habilitado', valor: 'false' },
@@ -470,7 +521,7 @@ async function seed() {
   for (const cfg of configDefault) {
     await prisma.configuracion.upsert({
       where: { clave: cfg.clave },
-      update: { valor: cfg.valor },
+      update: {},
       create: cfg
     });
   }
