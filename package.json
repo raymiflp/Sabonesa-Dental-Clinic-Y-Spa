@@ -5,7 +5,8 @@
     "build": "cd backend && npm install && npx prisma generate",
     "start": "cd backend && npx prisma db push && node prisma/init-railway.js && node src/index.js",
     "db:push": "cd backend && npx prisma db push",
-    "db:seed": "cd backend && node prisma/seed.js"
+    "db:seed": "cd backend && node prisma/seed.js",
+    "db:clean-demo": "cd backend && node prisma/clean-demo.js"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",

@@ -7,6 +7,7 @@
     "start": "npx prisma db push && node prisma/seed.js && node src/index.js",
     "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
+    "db:clean-demo": "node prisma/clean-demo.js",
     "db:studio": "npx prisma studio"
   },
   "dependencies": {

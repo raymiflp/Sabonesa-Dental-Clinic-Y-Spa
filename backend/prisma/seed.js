@@ -288,12 +288,16 @@ function elegirProcedimiento(catMap, idx) {
 }
 
 async function seed() {
-  // Verificar si ya hay datos (proteccion para produccion)
+  // Verificar si ya hay datos base (proteccion para produccion)
+  // OJO: Chequeamos PROCEDIMIENTOS, no pacientes.
+  // Si borras los pacientes pero los procedimientos existen,
+  // NO se debe recrear data demo. Así evitamos que al reiniciar
+  // Railway se regeneren los datos demo que borraste.
   const existingPacientes = await prisma.paciente.count();
   const existingProcs = await prisma.procedimiento.count();
   const existingConfig = await prisma.configuracion.count();
 
-  if (existingPacientes > 0) {
+  if (existingProcs > 0) {
     console.log('📌 Base de datos ya tiene datos. Solo asegurando config y procedimientos...');
 
     // Solo asegurar que existan configs basicas
