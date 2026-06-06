@@ -133,7 +133,7 @@ export default function HistorialClinico() {
   const [procedimientos, setProcedimientos] = useState([]);
   const [presupDialogOpen, setPresupDialogOpen] = useState(false);
   const [presupForm, setPresupForm] = useState({ fecha: new Date().toISOString().split('T')[0], items: [], notas: '' });
-  const [presupItem, setPresupItem] = useState({ procedimientoId: '', nombre: '', cantidad: 1, precio: 0 });
+  const [presupItem, setPresupItem] = useState({ procedimientoId: '', nombre: '', cantidad: '', precio: 0 });
   const [presupuestos, setPresupuestos] = useState([]);
   const [editingPresupuesto, setEditingPresupuesto] = useState(null);
   const [deleteTargetHC, setDeleteTargetHC] = useState(null);
@@ -348,12 +348,12 @@ export default function HistorialClinico() {
 
   // Presupuesto
   const addPresupItem = () => {
-    if (!presupItem.nombre) return;
+    if (!presupItem.nombre || !presupItem.cantidad) return;
     setPresupForm((prev) => ({
       ...prev,
       items: [...prev.items, { ...presupItem, id: Date.now() }],
     }));
-    setPresupItem((prev) => ({ procedimientoId: '', nombre: '', cantidad: prev.cantidad, precio: 0 }));
+    setPresupItem({ procedimientoId: '', nombre: '', cantidad: '', precio: 0 });
   };
 
   const removePresupItem = (id) => {
@@ -1407,7 +1407,7 @@ export default function HistorialClinico() {
                   type="number"
                   placeholder="Cant."
                   value={presupItem.cantidad}
-                  onChange={(e) => setPresupItem({ ...presupItem, cantidad: parseInt(e.target.value) || 1 })}
+                  onChange={(e) => setPresupItem({ ...presupItem, cantidad: e.target.value === '' ? '' : parseInt(e.target.value) || '' })}
                 />
                 <Input
                   type="number"
