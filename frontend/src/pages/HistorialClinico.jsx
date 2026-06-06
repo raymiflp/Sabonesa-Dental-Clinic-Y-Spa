@@ -25,6 +25,7 @@ import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { jsPDF } from 'jspdf';
 import { formatDateDDMMYYYY } from '@/utils/formatoFecha';
+import { to12h } from '@/utils/formatoHora';
 
 // --- Checkbox groups ---
 
@@ -352,7 +353,7 @@ export default function HistorialClinico() {
       ...prev,
       items: [...prev.items, { ...presupItem, id: Date.now() }],
     }));
-    setPresupItem({ procedimientoId: '', nombre: '', cantidad: 1, precio: 0 });
+    setPresupItem((prev) => ({ procedimientoId: '', nombre: '', cantidad: prev.cantidad, precio: 0 }));
   };
 
   const removePresupItem = (id) => {
@@ -632,7 +633,7 @@ export default function HistorialClinico() {
         for (const c of citas) {
           if (y > ph - 15) { pdf.addPage(); y = m; }
           pdf.text(c.fecha || '—', colX[0], y);
-          pdf.text(c.hora || '—', colX[1], y);
+          pdf.text(to12h(c.hora), colX[1], y);
           const proc = c.procedimiento || '—';
           const maxProcW = colW[2];
           if (pdf.getTextWidth(proc) > maxProcW) {
@@ -976,7 +977,7 @@ export default function HistorialClinico() {
                       form.agendaPaciente.map((c) => (
                         <TableRow key={c.id}>
                           <TableCell>{formatDateDDMMYYYY(c.fecha)}</TableCell>
-                          <TableCell>{c.hora || '—'}</TableCell>
+                          <TableCell>{to12h(c.hora)}</TableCell>
                           <TableCell>{c.procedimiento || '—'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={
