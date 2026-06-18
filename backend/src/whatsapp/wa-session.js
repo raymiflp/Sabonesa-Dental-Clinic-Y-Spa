@@ -177,8 +177,13 @@ class WaSession {
           this.isConnected = false;
           this.phoneNumber = null;
           this._lastQR = qr;
-          console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp:');
-          qrcode.generate(qr, { small: false });
+          // Solo imprimir QR en consola en desarrollo (no en producción: satura logs)
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp:');
+            qrcode.generate(qr, { small: false });
+          } else {
+            console.log('[WA-SESSION] 📱 Nuevo QR generado (disponible vía API)');
+          }
           if (onQR) onQR(qr);
         }
 
