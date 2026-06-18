@@ -211,7 +211,7 @@ class WaSession {
             this._state = 'disconnected';
             // Limpiar backup en DB si fue deslogueado
             if (this._prisma) {
-              this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
+              this._prisma.configuracion.deleteMany({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
             }
           }
         }
