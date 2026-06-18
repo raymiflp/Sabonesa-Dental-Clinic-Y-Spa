@@ -30,6 +30,9 @@ const prisma = new PrismaClient();
 // Helmet: security headers
 app.use(helmet());
 
+// E2E / test mode: skip rate limiting entirely
+const shouldSkipRateLimit = process.env.SKIP_RATE_LIMIT === 'true' || process.env.NODE_ENV === 'test';
+
 // Global rate limit: 100 requests per 15 minutes per IP
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -38,7 +41,9 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: 'Demasiadas solicitudes, intente de nuevo más tarde' },
 });
-app.use(globalLimiter);
+if (!shouldSkipRateLimit) {
+  app.use(globalLimiter);
+}
 
 // Auth-specific rate limit (stricter): 20 requests per 15 minutes
 const authLimiter = rateLimit({
@@ -65,7 +70,7 @@ app.use((req, res, next) => {
 });
 
 // Auth routes (no auth required, with stricter rate limit)
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', shouldSkipRateLimit ? (req, res, next) => next() : authLimiter, authRoutes);
 
 // Health check (no auth required)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
@@ -99,11 +104,14 @@ app.listen(PORT, () => {
   // Pasar prisma a waSession para persistencia en DB
   waSession.setPrisma(prisma);
 
-  // Iniciar sesión de WhatsApp Web (si el modo es 'web' o hay sesión guardada)
-  iniciarWaSession(prisma);
-
-  // Iniciar cron job de recordatorios
-  startCronJobs(prisma);
+  // Iniciar WhatsApp y cron jobs con delay para que el server termine de levantar
+  // antes de que estas operaciones async comenzan
+  setTimeout(() => {
+    iniciarWaSession(prisma).catch(err => {
+      console.error('[STARTUP] Error en iniciarWaSession:', err.message);
+    });
+    startCronJobs(prisma);
+  }, 2000);
 });
 
 async function iniciarWaSession(prisma) {

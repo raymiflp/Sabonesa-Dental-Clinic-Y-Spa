@@ -105,110 +105,124 @@ class WaSession {
     
     this._state = 'connecting';
 
-    // Asegurar que el directorio de sesión existe
-    if (!fs.existsSync(SESSION_DIR)) {
-      fs.mkdirSync(SESSION_DIR, { recursive: true });
-    }
-
-    // Restoration logic:
-    // 1. If creds.json exists on filesystem → use it directly
-    // 2. If not but DB backup exists → restore to filesystem, then use it
-    // 3. If neither → wait for QR scan
-    const credsPath = path.join(SESSION_DIR, 'creds.json');
-    const tieneCredsFS = fs.existsSync(credsPath);
-
-    if (!tieneCredsFS) {
-      // Intentar restaurar desde DB
-      const restored = await this._restoreBackupFromDB();
-      if (restored) {
-        console.log('[WA-SESSION] Backup restaurado desde DB al filesystem');
-      }
-    }
-
-    const { version, isLatest } = await fetchLatestBaileysVersion();
-    const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
-
-    // useMultiFileAuthState loads existing creds if they exist
-    const tieneSesion = fs.existsSync(credsPath);
-    if (tieneSesion) {
-      console.log('[WA-SESSION] Sesión guardada encontrada, conectando...');
-    } else {
-      console.log('[WA-SESSION] No hay sesión guardada. Esperando QR...');
-    }
-
-    const sock = makeWASocket({
-      version,
-      browser: Browsers.windows('Chrome'),
-      auth: state,
-      logger: pino({ level: 'silent' }),
-      syncFullHistory: false,
-      markOnlineOnConnect: true,
-    });
-
-    this.sock = sock;
-
-    // Guardar credenciales cuando se actualicen → también backup a DB
-    sock.ev.on('creds.update', async () => {
-      try {
-        await saveCreds();
-      } catch (err) {
-        console.error('[WA-SESSION] Error guardando credenciales:', err.message);
-        return;
-      }
-      try {
-        await this._saveBackupToDB();
-      } catch (err) {
-        console.error('[WA-SESSION] Error en backup DB:', err.message);
-      }
-    });
-
-    // Manejar eventos de conexión
-    sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
-      if (qr) {
-        this.isConnected = false;
-        this.phoneNumber = null;
-        this._lastQR = qr;
-        console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp:');
-        qrcode.generate(qr, { small: false });
-        if (onQR) onQR(qr);
+    try {
+      // Asegurar que el directorio de sesión existe
+      if (!fs.existsSync(SESSION_DIR)) {
+        fs.mkdirSync(SESSION_DIR, { recursive: true });
       }
 
-      if (connection === 'open') {
-        this.isConnected = true;
-        this._state = 'connected';
-        this.phoneNumber = sock.user?.id?.split(':')[0] || 'desconocido';
-        this._lastQR = null; // ya no se necesita QR
-        console.log(`[WA-SESSION] ✅ Conectado como ${this.phoneNumber}`);
-        if (onStatus) onStatus(`conectado:${this.phoneNumber}`);
-        // Backup después de conectar exitosamente
-        this._saveBackupToDB();
-      }
+      // Restoration logic:
+      // 1. If creds.json exists on filesystem → use it directly
+      // 2. If not but DB backup exists → restore to filesystem, then use it
+      // 3. If neither → wait for QR scan
+      const credsPath = path.join(SESSION_DIR, 'creds.json');
+      const tieneCredsFS = fs.existsSync(credsPath);
 
-      if (connection === 'close') {
-        this.isConnected = false;
-        const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-          ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
-          : true;
-
-        if (shouldReconnect) {
-          console.log('[WA-SESSION] Reconectando en 5s...');
-          this._state = 'disconnected';
-          setTimeout(() => {
-            this.init({ onQR, onStatus });
-          }, 5000);
-        } else {
-          console.log('[WA-SESSION] Sesión cerrada (logged out). Backup eliminado.');
-          this._lastQR = null;
-          this._state = 'disconnected';
-          // Limpiar backup en DB si fue deslogueado
-          if (this._prisma) {
-            this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
-          }
+      if (!tieneCredsFS) {
+        // Intentar restaurar desde DB
+        const restored = await this._restoreBackupFromDB();
+        if (restored) {
+          console.log('[WA-SESSION] Backup restaurado desde DB al filesystem');
         }
       }
-    });
 
-    return sock;
+      let version;
+      try {
+        const result = await fetchLatestBaileysVersion();
+        version = result.version;
+      } catch (err) {
+        console.warn('[WA-SESSION] No se pudo obtener versión de Baileys, usando default:', err.message);
+        version = [2, 3000, 123];
+      }
+      
+      const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
+
+      // useMultiFileAuthState loads existing creds if they exist
+      const tieneSesion = fs.existsSync(credsPath);
+      if (tieneSesion) {
+        console.log('[WA-SESSION] Sesión guardada encontrada, conectando...');
+      } else {
+        console.log('[WA-SESSION] No hay sesión guardada. Esperando QR...');
+      }
+
+      const sock = makeWASocket({
+        version,
+        browser: Browsers.windows('Chrome'),
+        auth: state,
+        logger: pino({ level: 'silent' }),
+        syncFullHistory: false,
+        markOnlineOnConnect: true,
+      });
+
+      this.sock = sock;
+
+      // Guardar credenciales cuando se actualicen → también backup a DB
+      sock.ev.on('creds.update', async () => {
+        try {
+          await saveCreds();
+        } catch (err) {
+          console.error('[WA-SESSION] Error guardando credenciales:', err.message);
+          return;
+        }
+        try {
+          await this._saveBackupToDB();
+        } catch (err) {
+          console.error('[WA-SESSION] Error en backup DB:', err.message);
+        }
+      });
+
+      // Manejar eventos de conexión
+      sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+        if (qr) {
+          this.isConnected = false;
+          this.phoneNumber = null;
+          this._lastQR = qr;
+          console.log('\n[WA-SESSION] 📱 Escaneá este código QR con WhatsApp:');
+          qrcode.generate(qr, { small: false });
+          if (onQR) onQR(qr);
+        }
+
+        if (connection === 'open') {
+          this.isConnected = true;
+          this._state = 'connected';
+          this.phoneNumber = sock.user?.id?.split(':')[0] || 'desconocido';
+          this._lastQR = null; // ya no se necesita QR
+          console.log(`[WA-SESSION] ✅ Conectado como ${this.phoneNumber}`);
+          if (onStatus) onStatus(`conectado:${this.phoneNumber}`);
+          // Backup después de conectar exitosamente
+          this._saveBackupToDB();
+        }
+
+        if (connection === 'close') {
+          this.isConnected = false;
+          const shouldReconnect = (lastDisconnect?.error instanceof Boom)
+            ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+            : true;
+
+          if (shouldReconnect) {
+            console.log('[WA-SESSION] Reconectando en 5s...');
+            this._state = 'disconnected';
+            setTimeout(() => {
+              this.init({ onQR, onStatus });
+            }, 5000);
+          } else {
+            console.log('[WA-SESSION] Sesión cerrada (logged out). Backup eliminado.');
+            this._lastQR = null;
+            this._state = 'disconnected';
+            // Limpiar backup en DB si fue deslogueado
+            if (this._prisma) {
+              this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
+            }
+          }
+        }
+      });
+
+      return sock;
+    } catch (err) {
+      this._state = 'disconnected';
+      this.isConnected = false;
+      console.error('[WA-SESSION] Error fatal en init, WhatsApp no disponible:', err.message);
+    }
   }
 
   /** Devuelve el último QR generado (para la API) */
