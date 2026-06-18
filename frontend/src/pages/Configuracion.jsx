@@ -113,9 +113,10 @@ export default function Configuracion() {
       // Recargar status
       const status = await api.getWhatsappStatus().catch(() => null);
       if (status) setWhatsappStatus(status);
-      // Si es modo web, cargar QR inmediatamente
+      // Si es modo web, cargar QR — esperar 1.5s para que init() genere el QR
       if (mode === 'web') {
         setShowQR(true);
+        setTimeout(loadQR, 1500);
       }
     } catch (err) {
       toast.error('Error: ' + err.message);

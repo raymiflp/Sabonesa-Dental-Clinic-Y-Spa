@@ -76,7 +76,13 @@ class WaSession {
         where: { clave: 'wa_session_backup' },
       });
       if (!row?.valor) return false;
-      const backup = JSON.parse(row.valor);
+      let backup;
+      try {
+        backup = JSON.parse(row.valor);
+      } catch (err) {
+        console.error('[WA-SESSION] Backup DB corrupto, ignorando:', err.message);
+        return false;
+      }
       const restored = restoreSessionFromObject(backup);
       if (restored) console.log('[WA-SESSION] Sesión restaurada desde DB');
       return restored;

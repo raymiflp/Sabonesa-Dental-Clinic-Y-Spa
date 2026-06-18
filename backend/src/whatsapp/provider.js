@@ -59,13 +59,13 @@ export class ProviderResolver {
 
     // fallbackMode = 'on_error' (default) or 'always'
     const waProvider = new WaMeProvider();
-    const waResult = waProvider.send({ telefono, mensaje, paciente });
+    const waResult = await waProvider.send({ telefono, mensaje, paciente });
     console.log(`[ProviderResolver] Usando fallback wa.me (${fallbackMode})`);
     return {
-      exito: true,
+      exito: waResult.exito,
       messageId: null,
       error: result.error,
-      waUrl: waResult.waUrl,
+      waUrl: waResult.waUrl || null,
       fallbackUsado: true,
     };
   }
