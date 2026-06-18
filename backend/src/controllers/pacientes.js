@@ -12,8 +12,10 @@ export const getAll = async (req, res) => {
 export const getById = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const paciente = await req.prisma.paciente.findUnique({
-      where: { id: Number(id) },
+      where: { id: idNum },
       include: {
         historialClinico: true,
         crediticios: { orderBy: { createdAt: 'desc' } },
@@ -31,6 +33,11 @@ export const getById = async (req, res) => {
 export const create = async (req, res) => {
   try {
     const data = req.body;
+
+    // Validar campos requeridos
+    if (!data.nombres || !data.apellidos) {
+      return res.status(400).json({ error: 'Nombres y apellidos son requeridos' });
+    }
 
     // Validar unicidad de cédula
     if (data.cedula) {
@@ -52,6 +59,8 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
 
     // Validar unicidad de cédula (excluyendo al mismo paciente)
@@ -59,13 +68,13 @@ export const update = async (req, res) => {
       const existente = await req.prisma.paciente.findUnique({
         where: { cedula: data.cedula }
       });
-      if (existente && existente.id !== Number(id)) {
+      if (existente && existente.id !== idNum) {
         return res.status(409).json({ error: 'La cédula ya está registrada' });
       }
     }
 
     const paciente = await req.prisma.paciente.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     res.json(paciente);
@@ -77,7 +86,9 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.paciente.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.paciente.delete({ where: { id: idNum } });
     res.json({ message: 'Paciente eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });

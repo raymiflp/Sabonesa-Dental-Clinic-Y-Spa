@@ -186,6 +186,7 @@ export default function HistorialClinico() {
     } catch (err) {
       console.warn('[HC load] Error:', err.message);
       // Si no hay historial, es primera vez — modo creación
+      toast.error('Error al cargar historial: ' + err.message);
     } finally {
       setLoading(false);
     }

@@ -44,6 +44,7 @@ export default function PatientList() {
     } catch (err) {
       console.error('Error loading pacientes:', err);
       setPacientes([]);
+      toast.error('Error al cargar pacientes: ' + err.message);
     } finally {
       setLoading(false);
     }

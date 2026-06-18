@@ -16,6 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, CalendarDays, Clock, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
+import { to12h } from '@/utils/formatoHora';
 import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -73,6 +74,7 @@ export default function Agenda() {
     } catch (err) {
       console.error('Error loading citas:', err);
       setCitas([]);
+      toast.error('Error al cargar citas: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -387,7 +389,7 @@ export default function Agenda() {
                         <Link to={`/historial/${c.pacienteId}`} className="font-semibold text-gray-900 hover:text-indigo-600 hover:underline">{getPacienteName(c.pacienteId)}</Link>
                         {c.hora && (
                           <span className="text-xs text-gray-400 flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {c.hora}
+                            <Clock className="w-3 h-3" /> {to12h(c.hora)}
                           </span>
                         )}
                       </div>

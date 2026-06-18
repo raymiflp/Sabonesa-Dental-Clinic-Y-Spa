@@ -25,6 +25,12 @@ export const getCategorias = async (req, res) => {
 export const create = async (req, res) => {
   try {
     const { nombre, categoriaId, precioSugerido, descripcion } = req.body;
+
+    // Validar campos requeridos
+    if (!nombre || !categoriaId) {
+      return res.status(400).json({ error: 'Nombre y categoría son requeridos' });
+    }
+
     const procedimiento = await req.prisma.procedimiento.create({
       data: {
         nombre,
@@ -42,11 +48,13 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
     if (data.categoriaId) data.categoriaId = Number(data.categoriaId);
     if (data.precioSugerido) data.precioSugerido = Number(data.precioSugerido);
     const procedimiento = await req.prisma.procedimiento.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     res.json(procedimiento);
@@ -58,7 +66,9 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.procedimiento.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.procedimiento.delete({ where: { id: idNum } });
     res.json({ message: 'Procedimiento eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -68,6 +78,12 @@ export const remove = async (req, res) => {
 export const createCategoria = async (req, res) => {
   try {
     const { nombre, descripcion } = req.body;
+
+    // Validar campos requeridos
+    if (!nombre) {
+      return res.status(400).json({ error: 'Nombre de categoría es requerido' });
+    }
+
     const categoria = await req.prisma.categoriaProcedimiento.create({
       data: { nombre, descripcion: descripcion || null }
     });
@@ -80,9 +96,11 @@ export const createCategoria = async (req, res) => {
 export const updateCategoria = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
     const categoria = await req.prisma.categoriaProcedimiento.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     res.json(categoria);
@@ -94,7 +112,9 @@ export const updateCategoria = async (req, res) => {
 export const deleteCategoria = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.categoriaProcedimiento.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.categoriaProcedimiento.delete({ where: { id: idNum } });
     res.json({ message: 'Categoría eliminada correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });

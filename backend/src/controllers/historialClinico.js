@@ -34,8 +34,10 @@ export const create = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     await req.prisma.historialClinico.delete({
-      where: { id: Number(id) }
+      where: { id: idNum }
     });
     res.json({ message: 'Historial clínico eliminado exitosamente' });
   } catch (error) {
@@ -46,11 +48,13 @@ export const remove = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
     const hasFotos = Array.isArray(data.fotos);
     console.log('[HC update] fotos:', hasFotos ? data.fotos.length : 'none', 'size:', JSON.stringify(data).length);
     const historial = await req.prisma.historialClinico.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     console.log('[HC update] saved, return fotos:', Array.isArray(historial.fotos) ? historial.fotos.length : typeof historial.fotos);

@@ -49,9 +49,11 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
     const crediticio = await req.prisma.crediticio.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data: {
         procedimiento: data.procedimiento || null,
         montoPagado: data.montoPagado ? Number(data.montoPagado) : null,
@@ -69,7 +71,9 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.crediticio.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.crediticio.delete({ where: { id: idNum } });
     res.json({ message: 'Registro crediticio eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -66,7 +66,7 @@ router.put('/mode', async (req, res) => {
 
     // Si cambia a 'web', reiniciar sesión
     if (mode === 'web') {
-      waSession._connecting = false;
+      waSession._state = 'idle';
       waSession.setPrisma(req.prisma);
       waSession.init().catch(err => {
         console.error('[WhatsApp] Error iniciando sesión web:', err.message);
@@ -86,7 +86,7 @@ router.put('/mode', async (req, res) => {
 router.post('/disconnect', async (req, res) => {
   try {
     if (waSession.sock) {
-      waSession.sock.logout().catch(() => {});
+      waSession.sock.logout().catch(err => console.error('[WhatsApp] Error en logout:', err.message));
       waSession.sock = null;
     }
     waSession.isConnected = false;
@@ -94,7 +94,7 @@ router.post('/disconnect', async (req, res) => {
     waSession._lastQR = null;
 
     // Limpiar backup en DB
-    await req.prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(() => {});
+    await req.prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WhatsApp] Error limpiando backup:', err.message));
 
     res.json({ success: true, message: 'Sesión desconectada' });
   } catch (error) {

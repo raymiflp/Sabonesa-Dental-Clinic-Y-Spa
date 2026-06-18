@@ -82,8 +82,8 @@ export default function Configuracion() {
             toast.success('¡WhatsApp conectado!');
           }
         }
-      } catch {
-        // Ignorar errores de polling
+      } catch (err) {
+        console.error('[Configuracion] Error polling QR:', err.message);
       }
     }, 5000);
 

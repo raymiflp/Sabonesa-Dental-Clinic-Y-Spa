@@ -12,8 +12,10 @@ export const getAll = async (req, res) => {
 export const getById = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const insumo = await req.prisma.insumo.findUnique({
-      where: { id: Number(id) }
+      where: { id: idNum }
     });
     if (!insumo) {
       return res.status(404).json({ error: 'Insumo no encontrado' });
@@ -45,10 +47,12 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
 
     const existing = await req.prisma.insumo.findUnique({
-      where: { id: Number(id) }
+      where: { id: idNum }
     });
     if (!existing) {
       return res.status(404).json({ error: 'Insumo no encontrado' });
@@ -58,7 +62,7 @@ export const update = async (req, res) => {
     if (data.precioUnitario !== undefined) data.precioUnitario = data.precioUnitario ? Number(data.precioUnitario) : null;
 
     const insumo = await req.prisma.insumo.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     res.json(insumo);
@@ -70,7 +74,9 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.insumo.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.insumo.delete({ where: { id: idNum } });
     res.json({ message: 'Insumo eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });

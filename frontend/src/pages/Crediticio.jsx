@@ -135,10 +135,10 @@ export default function Crediticio() {
         await api.updateCrediticio(editingCrediticio.id, data);
       } else {
         await api.createCrediticio(data);
-        // Marcar el presupuesto como aceptado si se seleccionó uno
-        if (form.presupuestoId) {
-          await api.updatePresupuesto(parseInt(form.presupuestoId), { estado: 'aceptado' });
-        }
+      }
+      // Marcar el presupuesto como aceptado si se seleccionó uno (both create and edit)
+      if (form.presupuestoId) {
+        await api.updatePresupuesto(parseInt(form.presupuestoId), { estado: 'aceptado' });
       }
       setDialogOpen(false);
       setEditingCrediticio(null);

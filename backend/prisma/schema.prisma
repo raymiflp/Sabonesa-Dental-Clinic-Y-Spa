@@ -106,6 +106,9 @@ model Cita {
   recordatorios Recordatorio[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Unique constraint to prevent duplicate appointments
+  @@unique([pacienteId, fecha, hora, procedimiento])
 }
 
 model Crediticio {

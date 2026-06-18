@@ -102,17 +102,23 @@ export const removeByUrl = async (req, res) => {
       return res.status(400).json({ error: 'URL de Cloudinary inválida' });
     }
 
-    const parts = url.split('/');
-    const uploadIndex = parts.findIndex(p => p === 'upload');
-    if (uploadIndex === -1) {
+    let publicId;
+    try {
+      const parts = url.split('/');
+      const uploadIndex = parts.findIndex(p => p === 'upload');
+      if (uploadIndex === -1) {
+        return res.status(400).json({ error: 'No se pudo extraer publicId de la URL' });
+      }
+      const afterUpload = parts.slice(uploadIndex + 1);
+      const versionPrefix = afterUpload.findIndex(p => p.startsWith('v'));
+      const publicIdSegments = versionPrefix >= 0
+        ? afterUpload.slice(versionPrefix + 1)
+        : afterUpload;
+      publicId = FOLDER + '/' + publicIdSegments.join('/').replace(/\.[^.]+$/, '');
+    } catch (parseErr) {
+      console.error('[cloudinary] URL parsing failed:', parseErr.message);
       return res.status(400).json({ error: 'No se pudo extraer publicId de la URL' });
     }
-    const afterUpload = parts.slice(uploadIndex + 1);
-    const versionPrefix = afterUpload.findIndex(p => p.startsWith('v'));
-    const publicIdSegments = versionPrefix >= 0
-      ? afterUpload.slice(versionPrefix + 1)
-      : afterUpload;
-    const publicId = FOLDER + '/' + publicIdSegments.join('/').replace(/\.[^.]+$/, '');
 
     await cloudinary.uploader.destroy(publicId);
     console.log('[cloudinary] deleted by url:', publicId);

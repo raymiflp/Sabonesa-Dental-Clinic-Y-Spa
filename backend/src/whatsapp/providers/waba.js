@@ -5,8 +5,8 @@ export class WabaProvider extends WhatsAppProvider {
     const token = process.env.WABA_TOKEN;
     const phoneId = process.env.WABA_PHONE_ID;
 
-    if (!token) throw new Error('WABA_TOKEN no configurado en .env');
-    if (!phoneId) throw new Error('WABA_PHONE_ID no configurado en .env');
+    if (!token) return { exito: false, messageId: null, error: 'WABA_TOKEN no configurado en .env', waUrl: null };
+    if (!phoneId) return { exito: false, messageId: null, error: 'WABA_PHONE_ID no configurado en .env', waUrl: null };
     if (!telefono) return { exito: false, messageId: null, error: 'Teléfono no proporcionado', waUrl: null };
 
     const telefonoLimpio = telefono.replace(/[^\d]/g, '');

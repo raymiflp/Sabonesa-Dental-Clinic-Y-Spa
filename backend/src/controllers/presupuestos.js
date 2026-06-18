@@ -14,6 +14,12 @@ export const getByPaciente = async (req, res) => {
 export const create = async (req, res) => {
   try {
     const data = req.body;
+
+    // Validar campos requeridos
+    if (!data.pacienteId || !data.fecha) {
+      return res.status(400).json({ error: 'Paciente y fecha son requeridos' });
+    }
+
     const presupuesto = await req.prisma.presupuesto.create({
       data: {
         pacienteId: Number(data.pacienteId),
@@ -33,11 +39,13 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const { id } = req.params;
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
     const data = req.body;
     if (data.montoTotal) data.montoTotal = Number(data.montoTotal);
     if (data.pacienteId) data.pacienteId = Number(data.pacienteId);
     const presupuesto = await req.prisma.presupuesto.update({
-      where: { id: Number(id) },
+      where: { id: idNum },
       data
     });
     res.json(presupuesto);
@@ -49,7 +57,9 @@ export const update = async (req, res) => {
 export const remove = async (req, res) => {
   try {
     const { id } = req.params;
-    await req.prisma.presupuesto.delete({ where: { id: Number(id) } });
+    const idNum = parseInt(id, 10);
+    if (isNaN(idNum)) return res.status(400).json({ error: 'ID inválido' });
+    await req.prisma.presupuesto.delete({ where: { id: idNum } });
     res.json({ message: 'Presupuesto eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });

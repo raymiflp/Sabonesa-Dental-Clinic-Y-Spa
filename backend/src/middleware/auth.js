@@ -1,14 +1,13 @@
 import jwt from 'jsonwebtoken';
 
+// Fail fast if JWT_SECRET is missing in any non-test environment
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in production');
+}
+
 const JWT_SECRET = process.env.NODE_ENV === 'production'
   ? process.env.JWT_SECRET
   : (process.env.JWT_SECRET || 'betty-dev-secret');
-
-// Ensure JWT_SECRET is present in production
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('FATAL: JWT_SECRET no está configurado');
-  process.exit(1);
-}
 
 export function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;

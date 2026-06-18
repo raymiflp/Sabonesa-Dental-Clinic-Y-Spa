@@ -41,7 +41,7 @@ class WaSession {
     this.sock = null;
     this.isConnected = false;
     this.phoneNumber = null;
-    this._connecting = false;
+    this._state = 'idle'; // 'idle' | 'connecting' | 'connected' | 'disconnected'
     this._lastQR = null;
     this._prisma = null;
   }
@@ -99,17 +99,26 @@ class WaSession {
    * @param {(status: string) => void} [options.onStatus] - callback de estado
    */
   async init({ onQR, onStatus } = {}) {
-    if (this._connecting) return;
-    this._connecting = true;
+    // State machine: only init if idle or disconnected
+    if (this._state === 'connecting') return;
+    if (this._state === 'connected' && this.sock) return;
+    
+    this._state = 'connecting';
 
     // Asegurar que el directorio de sesión existe
     if (!fs.existsSync(SESSION_DIR)) {
       fs.mkdirSync(SESSION_DIR, { recursive: true });
     }
 
-    // Si el filesystem está vacío pero hay backup en DB, restaurar
-    const tieneCredsFS = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
+    // Restoration logic:
+    // 1. If creds.json exists on filesystem → use it directly
+    // 2. If not but DB backup exists → restore to filesystem, then use it
+    // 3. If neither → wait for QR scan
+    const credsPath = path.join(SESSION_DIR, 'creds.json');
+    const tieneCredsFS = fs.existsSync(credsPath);
+
     if (!tieneCredsFS) {
+      // Intentar restaurar desde DB
       const restored = await this._restoreBackupFromDB();
       if (restored) {
         console.log('[WA-SESSION] Backup restaurado desde DB al filesystem');
@@ -119,7 +128,8 @@ class WaSession {
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
 
-    const tieneSesion = fs.existsSync(path.join(SESSION_DIR, 'creds.json'));
+    // useMultiFileAuthState loads existing creds if they exist
+    const tieneSesion = fs.existsSync(credsPath);
     if (tieneSesion) {
       console.log('[WA-SESSION] Sesión guardada encontrada, conectando...');
     } else {
@@ -139,8 +149,17 @@ class WaSession {
 
     // Guardar credenciales cuando se actualicen → también backup a DB
     sock.ev.on('creds.update', async () => {
-      await saveCreds();
-      await this._saveBackupToDB();
+      try {
+        await saveCreds();
+      } catch (err) {
+        console.error('[WA-SESSION] Error guardando credenciales:', err.message);
+        return;
+      }
+      try {
+        await this._saveBackupToDB();
+      } catch (err) {
+        console.error('[WA-SESSION] Error en backup DB:', err.message);
+      }
     });
 
     // Manejar eventos de conexión
@@ -156,11 +175,11 @@ class WaSession {
 
       if (connection === 'open') {
         this.isConnected = true;
+        this._state = 'connected';
         this.phoneNumber = sock.user?.id?.split(':')[0] || 'desconocido';
         this._lastQR = null; // ya no se necesita QR
         console.log(`[WA-SESSION] ✅ Conectado como ${this.phoneNumber}`);
         if (onStatus) onStatus(`conectado:${this.phoneNumber}`);
-        this._connecting = false;
         // Backup después de conectar exitosamente
         this._saveBackupToDB();
       }
@@ -173,17 +192,17 @@ class WaSession {
 
         if (shouldReconnect) {
           console.log('[WA-SESSION] Reconectando en 5s...');
+          this._state = 'disconnected';
           setTimeout(() => {
-            this._connecting = false;
             this.init({ onQR, onStatus });
           }, 5000);
         } else {
           console.log('[WA-SESSION] Sesión cerrada (logged out). Backup eliminado.');
           this._lastQR = null;
-          this._connecting = false;
+          this._state = 'disconnected';
           // Limpiar backup en DB si fue deslogueado
           if (this._prisma) {
-            this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(() => {});
+            this._prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
           }
         }
       }

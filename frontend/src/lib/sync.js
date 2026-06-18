@@ -14,6 +14,7 @@ let _pendingCount = 0;
 let _listeners = [];
 let _processing = false;
 let _intervalId = null;
+let _cleanup = null;
 
 function notify() {
   _listeners.forEach((cb) => cb({ status: _status, pendingCount: _pendingCount }));
@@ -107,6 +108,9 @@ function handleOffline() {
 
 // Start monitoring
 export function initSync() {
+  // Clean up any existing listeners before setting up new ones
+  _cleanup && _cleanup();
+
   // Initial state
   _status = navigator.onLine ? 'online' : 'offline';
   refreshPendingCount();
@@ -126,11 +130,14 @@ export function initSync() {
     setTimeout(processQueue, 2000);
   }
 
-  return () => {
+  _cleanup = () => {
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
     if (_intervalId) clearInterval(_intervalId);
+    _cleanup = null;
   };
+
+  return _cleanup;
 }
 
 // Manually trigger sync (called after API mutations come back online)
