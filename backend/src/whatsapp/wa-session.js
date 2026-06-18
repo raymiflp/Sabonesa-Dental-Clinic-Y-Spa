@@ -202,6 +202,7 @@ class WaSession {
           if (shouldReconnect) {
             console.log('[WA-SESSION] Reconectando en 5s...');
             this._state = 'disconnected';
+            this.sock = null; // clear socket ref so reconnect can proceed
             setTimeout(() => {
               this.init({ onQR, onStatus });
             }, 5000);
