@@ -107,8 +107,9 @@ model Cita {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Unique constraint to prevent duplicate appointments
-  @@unique([pacienteId, fecha, hora, procedimiento])
+  // NOTE: Unique constraint on [pacienteId, fecha, hora, procedimiento] removed
+  // to avoid prisma db push failures with --accept-data-loss in Railway.
+  // Add it back later with a proper migration after cleaning duplicates.
 }
 
 model Crediticio {
