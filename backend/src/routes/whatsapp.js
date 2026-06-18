@@ -85,17 +85,7 @@ router.put('/mode', async (req, res) => {
  */
 router.post('/disconnect', async (req, res) => {
   try {
-    if (waSession.sock) {
-      waSession.sock.logout().catch(err => console.error('[WhatsApp] Error en logout:', err.message));
-      waSession.sock = null;
-    }
-    waSession.isConnected = false;
-    waSession.phoneNumber = null;
-    waSession._lastQR = null;
-
-    // Limpiar backup en DB
-    await req.prisma.configuracion.delete({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WhatsApp] Error limpiando backup:', err.message));
-
+    await waSession.logout();
     res.json({ success: true, message: 'Sesión desconectada' });
   } catch (error) {
     res.status(500).json({ error: error.message });

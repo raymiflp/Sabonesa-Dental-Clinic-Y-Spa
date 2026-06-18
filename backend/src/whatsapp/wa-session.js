@@ -207,9 +207,17 @@ class WaSession {
               this.init({ onQR, onStatus });
             }, 5000);
           } else {
-            console.log('[WA-SESSION] Sesión cerrada (logged out). Backup eliminado.');
+            console.log('[WA-SESSION] Sesión cerrada (logged out). Limpiando sesión...');
             this._lastQR = null;
-            this._state = 'disconnected';
+            this._state = 'idle';
+            this.isConnected = false;
+            this.sock = null;
+            // Limpiar archivos de sesión del filesystem
+            if (fs.existsSync(SESSION_DIR)) {
+              for (const f of fs.readdirSync(SESSION_DIR)) {
+                fs.unlinkSync(path.join(SESSION_DIR, f));
+              }
+            }
             // Limpiar backup en DB si fue deslogueado
             if (this._prisma) {
               this._prisma.configuracion.deleteMany({ where: { clave: 'wa_session_backup' } }).catch(err => console.error('[WA-SESSION] Error eliminando backup:', err.message));
@@ -242,6 +250,47 @@ class WaSession {
   /** Verifica si la sesión está conectada */
   isActive() {
     return this.isConnected && this.sock !== null;
+  }
+
+  /** Desconecta y limpia toda la sesión (socket + archivos + DB) */
+  async logout() {
+    // 1. Desconectar socket si existe
+    if (this.sock) {
+      try {
+        await this.sock.logout();
+      } catch (err) {
+        console.warn('[WA-SESSION] logout socket error:', err.message);
+      }
+      this.sock = null;
+    }
+
+    // 2. Limpiar estado
+    this.isConnected = false;
+    this.phoneNumber = null;
+    this._lastQR = null;
+    this._state = 'idle';
+
+    // 3. Borrar archivos de sesión del filesystem
+    if (fs.existsSync(SESSION_DIR)) {
+      try {
+        for (const f of fs.readdirSync(SESSION_DIR)) {
+          fs.unlinkSync(path.join(SESSION_DIR, f));
+        }
+        console.log('[WA-SESSION] Archivos de sesión eliminados del filesystem');
+      } catch (err) {
+        console.error('[WA-SESSION] Error limpiando archivos de sesión:', err.message);
+      }
+    }
+
+    // 4. Borrar backup de la DB
+    if (this._prisma) {
+      try {
+        await this._prisma.configuracion.deleteMany({ where: { clave: 'wa_session_backup' } });
+        console.log('[WA-SESSION] Backup de DB eliminado');
+      } catch (err) {
+        console.warn('[WA-SESSION] Error eliminando backup de DB:', err.message);
+      }
+    }
   }
 }
 
