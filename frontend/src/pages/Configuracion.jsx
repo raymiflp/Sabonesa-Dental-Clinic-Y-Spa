@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Loader2, Smartphone, QrCode, RefreshCw, Signal, SignalHigh, WifiOff, MessageCircle, Settings2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function Configuracion() {
   // WhatsApp state
@@ -62,6 +63,33 @@ export default function Configuracion() {
 
   useEffect(() => { loadConfig(); }, []);
 
+  // Polling del QR cada 5 segundos mientras está en modo web y no conectado
+  useEffect(() => {
+    if (providerMode !== 'web' || whatsappStatus?.connected || !showQR) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const data = await api.getWhatsappQr();
+        if (data.qr) {
+          setQrData(data.qr);
+        }
+        if (data.connected) {
+          // Se conectó mientras tanto
+          const status = await api.getWhatsappStatus().catch(() => null);
+          if (status) {
+            setWhatsappStatus(status);
+            setShowQR(false);
+            toast.success('¡WhatsApp conectado!');
+          }
+        }
+      } catch {
+        // Ignorar errores de polling
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [providerMode, whatsappStatus?.connected, showQR]);
+
   // Cargar QR
   const loadQR = async () => {
     try {
@@ -78,11 +106,17 @@ export default function Configuracion() {
   const handleModeChange = async (mode) => {
     try {
       setProviderMode(mode);
+      setShowQR(false);
+      setQrData(null);
       await api.updateWhatsappMode(mode);
       toast.success(`Modo cambiado a ${mode === 'web' ? 'WhatsApp Web' : mode === 'wa' ? 'Link wa.me' : mode}`);
       // Recargar status
       const status = await api.getWhatsappStatus().catch(() => null);
       if (status) setWhatsappStatus(status);
+      // Si es modo web, cargar QR inmediatamente
+      if (mode === 'web') {
+        setShowQR(true);
+      }
     } catch (err) {
       toast.error('Error: ' + err.message);
     }
@@ -439,27 +473,17 @@ function TestSender() {
 }
 
 /**
- * Componente interno para renderizar QR como DataMatrix usando API pública
+ * Componente interno para renderizar QR localmente con qrcode.react
  */
 function QrImage({ data }) {
   if (!data) return null;
-  // Usar API pública de QR
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data)}`;
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <img
-        src={qrUrl}
-        alt="Código QR de WhatsApp"
-        className="border-2 border-gray-100 rounded-lg"
-        style={{ width: 250, height: 250 }}
-        onError={(e) => {
-          // Fallback si la API no está disponible
-          e.target.style.display = 'none';
-          document.getElementById('qr-fallback')?.classList.remove('hidden');
-        }}
-      />
-      <p id="qr-fallback" className="hidden text-xs text-gray-400 max-w-xs break-all font-mono bg-gray-50 p-2 rounded">
+      <div className="border-2 border-gray-100 rounded-lg overflow-hidden">
+        <QRCodeSVG value={data} size={250} />
+      </div>
+      <p className="text-xs text-gray-400 max-w-xs break-all font-mono bg-gray-50 p-2 rounded">
         {data}
       </p>
     </div>
