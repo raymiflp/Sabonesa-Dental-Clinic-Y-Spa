@@ -3,10 +3,14 @@
   "private": true,
   "scripts": {
     "build": "cd backend && npm install && npx prisma generate",
-    "start": "cd backend && npx prisma db push && node prisma/init-railway.js && node src/index.js",
-    "db:push": "cd backend && npx prisma db push",
+    "start": "cd backend && npx prisma db push --accept-data-loss && node prisma/init-railway.js && node src/index.js",
+    "db:push": "cd backend && npx prisma db push --accept-data-loss",
+    "db:push:safe": "cd backend && npx prisma db push",
     "db:seed": "cd backend && node prisma/seed.js",
-    "db:clean-demo": "cd backend && node prisma/clean-demo.js"
+    "db:seed:e2e": "cd backend && node prisma/seed-e2e.js",
+    "db:clean-demo": "cd backend && node prisma/clean-demo.js",
+    "test:e2e": "npx playwright test --config e2e/playwright.config.js",
+    "test:e2e:ui": "npx playwright test --ui --config e2e/playwright.config.js"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
@@ -19,6 +23,7 @@
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "prisma": "^6.0.0"
   }
 }
