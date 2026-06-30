@@ -100,7 +100,7 @@ class WaSession {
    */
   async init({ onQR, onStatus } = {}) {
     // State machine: only init if idle or disconnected
-    if (this._state === 'connecting') return;
+    if (this._state === 'connecting' && this.sock) return;
     if (this._state === 'connected' && this.sock) return;
     
     this._state = 'connecting';
@@ -209,6 +209,10 @@ class WaSession {
             this._state = 'disconnected';
             this.sock = null; // clear socket ref so reconnect can proceed
             setTimeout(() => {
+              // TODO: capture stored callbacks via a class field if hooks are ever added (see bug #3).
+              // Right now onQR/onStatus come from this closure; if they are undefined (e.g. the
+              // mode-switch route calls init() without passing them), reconnect still works because
+              // the UI polls /api/whatsapp/status — but server-side event hooks won't fire.
               this.init({ onQR, onStatus });
             }, 5000);
           } else {
@@ -237,6 +241,32 @@ class WaSession {
       this.isConnected = false;
       console.error('[WA-SESSION] Error fatal en init, WhatsApp no disponible:', err.message);
     }
+  }
+
+  /**
+   * Cierra el socket activo (si existe) y vuelve a iniciar la conexión.
+   * Es la operación correcta para cambiar de modo de provider: garantiza que
+   * no queden dos sockets compitiendo por el mismo auth state (bug #2).
+   *
+   * El cierre es best-effort: si end() falla (p.ej. socket ya caído),
+   * igualmente nulificamos el ref para que init() pueda avanzar.
+   */
+  async restart({ onQR, onStatus } = {}) {
+    if (this.sock) {
+      try {
+        await this.sock.end(undefined);
+      } catch (err) {
+        console.warn('[WA-SESSION] restart: error cerrando socket previo:', err.message);
+      }
+      this.sock = null;
+    }
+
+    this._state = 'idle';
+    this.isConnected = false;
+    this.phoneNumber = null;
+    this._lastQR = null;
+
+    await this.init({ onQR, onStatus });
   }
 
   /** Devuelve el último QR generado (para la API) */

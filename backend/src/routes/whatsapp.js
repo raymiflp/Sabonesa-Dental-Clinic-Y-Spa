@@ -66,10 +66,9 @@ router.put('/mode', async (req, res) => {
 
     // Si cambia a 'web', reiniciar sesión
     if (mode === 'web') {
-      waSession._state = 'idle';
       waSession.setPrisma(req.prisma);
-      waSession.init().catch(err => {
-        console.error('[WhatsApp] Error iniciando sesión web:', err.message);
+      waSession.restart().catch(err => {
+        console.error('[WhatsApp] Error reiniciando sesión web:', err.message);
       });
     }
 

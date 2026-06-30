@@ -69,4 +69,42 @@ export class ProviderResolver {
       fallbackUsado: true,
     };
   }
+
+  /**
+   * Envía un mensaje usando el provider activo SIN fallback.
+   *
+   * A diferencia de sendWithFallback, este método:
+   *   - NO cae en wa.me deeplink cuando el provider primario falla
+   *   - Devuelve exito:false si el envío real falla
+   *   - Preserva el waUrl emitido por el provider activo cuando este es
+   *     exitoso (caso típico: provider = WaMeProvider en mode='wa', donde
+   *     el link wa.me ES el entregable de la operación)
+   *
+   * Está pensado para flujos donde mentir con un exito:true es peligroso
+   * (p.ej. recordatorios a pacientes que se persisten como 'enviado' en DB).
+   *
+   * El endpoint manual POST /api/whatsapp/test sigue usando sendWithFallback
+   * porque el operador quiere ver/clickear el link wa.me cuando algo falla.
+   */
+  async sendStrict({ telefono, mensaje, paciente, prisma }) {
+    const { provider, mode } = await this.getActive();
+
+    let result;
+    try {
+      result = await provider.send({ telefono, mensaje, paciente });
+    } catch (err) {
+      result = { exito: false, messageId: null, error: err.message, waUrl: null };
+    }
+
+    console.log(`[ProviderResolver] Modo: ${mode}, exito: ${result.exito}${result.messageId ? ', msgId: ' + result.messageId : ''}${result.error ? ', error: ' + result.error : ''}`);
+
+    if (!result.exito) {
+      // Sin fallback. El caller decide qué hacer (marcar como fallido, etc.).
+      return { exito: false, messageId: null, error: result.error || 'unknown error', waUrl: null };
+    }
+
+    // Éxito: preservamos el waUrl del provider (relevante cuando el provider
+    // activo es wa.me y el deeplink ES el entregable de la operación).
+    return { exito: true, messageId: result.messageId ?? null, error: null, waUrl: result.waUrl ?? null };
+  }
 }
