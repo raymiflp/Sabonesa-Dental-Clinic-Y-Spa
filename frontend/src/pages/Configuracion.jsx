@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2, Smartphone, QrCode, RefreshCw, Signal, SignalHigh, WifiOff, MessageCircle, Settings2 } from 'lucide-react';
+import { Loader2, Smartphone, QrCode, RefreshCw, Signal, SignalHigh, WifiOff, MessageCircle, Settings2, Sun } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Configuracion() {
   // WhatsApp state
@@ -30,6 +31,9 @@ export default function Configuracion() {
   const [plantillaCancelacion, setPlantillaCancelacion] = useState('');
 
   const [saving, setSaving] = useState(false);
+
+  // Tema
+  const { theme, setTheme } = useTheme();
 
   // Cargar configuración
   const loadConfig = async () => {
@@ -158,7 +162,7 @@ export default function Configuracion() {
   if (loadingStatus) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -166,8 +170,8 @@ export default function Configuracion() {
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-8">
       <div className="flex items-center gap-3 mb-2">
-        <Settings2 className="w-6 h-6 text-gray-600" />
-        <h1 className="text-2xl font-bold text-gray-800">Configuración</h1>
+        <Settings2 className="w-6 h-6 text-muted-foreground" />
+        <h1 className="text-2xl font-bold text-foreground">Configuración</h1>
       </div>
 
       {/* ---- WhatsApp ---- */}
@@ -186,8 +190,8 @@ export default function Configuracion() {
             <div className="flex items-center gap-2">
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                 whatsappStatus?.connected
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-gray-100 text-gray-500'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  : 'bg-muted text-muted-foreground'
               }`}>
                 {whatsappStatus?.connected ? (
                   <><SignalHigh className="w-3 h-3" /> Conectado</>
@@ -215,20 +219,20 @@ export default function Configuracion() {
 
           {/* Estado de conexión (solo en modo web) */}
           {providerMode === 'web' && (
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div className="bg-muted rounded-lg p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Estado de conexión</p>
+                  <p className="text-sm font-medium text-foreground">Estado de conexión</p>
                   {whatsappStatus?.connected && whatsappStatus?.phoneNumber ? (
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-sm text-green-600 mt-1 dark:text-green-400">
                       ✅ Conectado como <span className="font-semibold">{whatsappStatus.phoneNumber}</span>
                     </p>
                   ) : whatsappStatus?.hasQR ? (
-                    <p className="text-sm text-amber-600 mt-1">
+                    <p className="text-sm text-amber-600 mt-1 dark:text-amber-400">
                       ⏳ QR generado — escanea con WhatsApp
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       No hay sesión activa. Genera un QR para conectar.
                     </p>
                   )}
@@ -252,12 +256,12 @@ export default function Configuracion() {
 
               {/* QR display */}
               {showQR && qrData && (
-                <div className="border border-gray-200 rounded-lg p-4 bg-white text-center">
-                  <p className="text-xs text-gray-400 mb-3">
+                <div className="border border-border rounded-lg p-4 bg-card text-center">
+                  <p className="text-xs text-muted-foreground mb-3">
                     Escanea con WhatsApp → Dispositivos vinculados → Vincular dispositivo
                   </p>
                   <QrImage data={qrData} />
-                  <Button variant="ghost" size="sm" className="mt-3 text-gray-400"
+                  <Button variant="ghost" size="sm" className="mt-3 text-muted-foreground"
                     onClick={() => setShowQR(false)}>
                     Ocultar QR
                   </Button>
@@ -265,12 +269,43 @@ export default function Configuracion() {
               )}
 
               {!whatsappStatus?.connected && !qrData && providerMode === 'web' && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-muted-foreground">
                   ⚠️ En Railway: genera el QR y escanéalo. La sesión se guarda automáticamente en la base de datos para que persista entre reinicios.
                 </p>
               )}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ---- Apariencia ---- */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sun className="w-5 h-5 text-amber-500" />
+            Apariencia
+          </CardTitle>
+          <CardDescription>
+            Tema visual de la aplicación
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <Label>Tema</Label>
+            <Select value={theme} onValueChange={setTheme}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Claro</SelectItem>
+                <SelectItem value="dark">Oscuro</SelectItem>
+                <SelectItem value="system">Sistema (automático)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sistema sigue la preferencia de tu dispositivo.
+          </p>
         </CardContent>
       </Card>
 
@@ -290,7 +325,7 @@ export default function Configuracion() {
           <div className="flex items-center justify-between">
             <div>
               <Label className="text-base font-medium">Recordatorios automáticos</Label>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Enviar mensajes a pacientes con citas próximas
               </p>
             </div>
@@ -298,7 +333,7 @@ export default function Configuracion() {
               variant={recordatorioHabilitado ? 'default' : 'outline'}
               size="sm"
               onClick={() => setRecordatorioHabilitado(!recordatorioHabilitado)}
-              className={recordatorioHabilitado ? 'bg-green-600 hover:bg-green-700' : ''}
+              className={recordatorioHabilitado ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
             >
               {recordatorioHabilitado ? 'Activado' : 'Desactivado'}
             </Button>
@@ -335,14 +370,14 @@ export default function Configuracion() {
           </div>
 
           {/* Plantillas */}
-          <div className="border-t border-gray-100 pt-4 space-y-4">
-            <p className="text-sm font-medium text-gray-700">Plantillas de mensajes</p>
-            <p className="text-xs text-gray-400">
+          <div className="border-t border-border pt-4 space-y-4">
+            <p className="text-sm font-medium text-foreground">Plantillas de mensajes</p>
+            <p className="text-xs text-muted-foreground">
               Variables disponibles: {'{nombre}'}, {'{clinica}'}, {'{fecha}'}, {'{hora}'}, {'{procedimiento}'}
             </p>
 
             <div className="space-y-2">
-              <Label className="text-xs text-gray-500">Recordatorio de cita</Label>
+              <Label className="text-xs text-muted-foreground">Recordatorio de cita</Label>
               <textarea
                 className="w-full min-h-[60px] px-3 py-2 text-sm rounded-lg border border-input bg-background resize-y"
                 value={plantillaRecordatorio}
@@ -352,7 +387,7 @@ export default function Configuracion() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-gray-500">Confirmación de cita</Label>
+              <Label className="text-xs text-muted-foreground">Confirmación de cita</Label>
               <textarea
                 className="w-full min-h-[60px] px-3 py-2 text-sm rounded-lg border border-input bg-background resize-y"
                 value={plantillaConfirmacion}
@@ -362,7 +397,7 @@ export default function Configuracion() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs text-gray-500">Cancelación de cita</Label>
+              <Label className="text-xs text-muted-foreground">Cancelación de cita</Label>
               <textarea
                 className="w-full min-h-[60px] px-3 py-2 text-sm rounded-lg border border-input bg-background resize-y"
                 value={plantillaCancelacion}
@@ -455,7 +490,7 @@ function TestSender() {
       </Button>
 
       {result && (
-        <div className={`p-3 rounded-lg text-sm ${result.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+        <div className={`p-3 rounded-lg text-sm ${result.success ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
           <p className="font-medium">{result.success ? '✅ Enviado' : '❌ Fallido'}</p>
           {result.waUrl && (
             <a href={result.waUrl} target="_blank" rel="noopener noreferrer"
@@ -464,7 +499,7 @@ function TestSender() {
             </a>
           )}
           {result.error && <p className="text-xs mt-1">Error: {result.error}</p>}
-          {result.mode && <p className="text-xs text-gray-400 mt-1">Modo: {result.mode}</p>}
+          {result.mode && <p className="text-xs text-muted-foreground mt-1">Modo: {result.mode}</p>}
         </div>
       )}
     </div>
@@ -479,10 +514,10 @@ function QrImage({ data }) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="border-2 border-gray-100 rounded-lg overflow-hidden">
+      <div className="border-2 border-border rounded-lg overflow-hidden">
         <QRCodeSVG value={data} size={250} />
       </div>
-      <p className="text-xs text-gray-400 max-w-xs break-all font-mono bg-gray-50 p-2 rounded">
+      <p className="text-xs text-muted-foreground max-w-xs break-all font-mono bg-muted p-2 rounded">
         {data}
       </p>
     </div>

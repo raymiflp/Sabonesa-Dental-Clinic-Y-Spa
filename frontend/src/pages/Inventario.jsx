@@ -18,9 +18,9 @@ import PasswordConfirmDialog from '@/components/PasswordConfirmDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 const STOCK_COLORS = {
-  empty: 'bg-red-100 text-red-700',
-  low: 'bg-yellow-100 text-yellow-700',
-  ok: 'bg-green-100 text-green-700',
+  empty: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  low: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  ok: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
 };
 
 function getStockColor(cantidad) {
@@ -130,8 +130,8 @@ export default function Inventario() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-          <p className="text-sm text-gray-500 mt-1">Gestión de insumos y suministros</p>
+          <h1 className="text-2xl font-bold text-foreground">Inventario</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestión de insumos y suministros</p>
         </div>
         <Button onClick={openNew}>
           <Plus className="w-4 h-4 mr-1" />
@@ -140,10 +140,10 @@ export default function Inventario() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Cargando...</div>
+        <div className="text-center py-12 text-muted-foreground">Cargando...</div>
       ) : insumos.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+          <Package className="w-12 h-12 mx-auto mb-3 text-muted-foreground/60" />
           <p>No hay insumos registrados</p>
           <p className="text-sm mt-1">Agrega un nuevo insumo para comenzar</p>
         </div>
@@ -165,9 +165,9 @@ export default function Inventario() {
                   <TableRow key={insumo.id}>
                     <TableCell>
                       <div>
-                        <p className="font-medium text-gray-800">{insumo.nombre}</p>
+                        <p className="font-medium text-foreground">{insumo.nombre}</p>
                         {insumo.descripcion && (
-                          <p className="text-xs text-gray-400 mt-0.5">{insumo.descripcion}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{insumo.descripcion}</p>
                         )}
                       </div>
                     </TableCell>
@@ -176,10 +176,10 @@ export default function Inventario() {
                         {insumo.cantidad}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium text-gray-600">
+                    <TableCell className="font-medium text-muted-foreground">
                       {formatCurrency(insumo.precioUnitario)}
                     </TableCell>
-                    <TableCell className="text-gray-500">
+                    <TableCell className="text-muted-foreground">
                       {insumo.proveedor || '—'}
                     </TableCell>
                     <TableCell>
@@ -187,7 +187,7 @@ export default function Inventario() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 text-gray-400"
+                          className="h-7 w-7 text-muted-foreground"
                           title="Editar"
                           onClick={() => openEdit(insumo)}
                         >

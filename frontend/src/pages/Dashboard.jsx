@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Users, Calendar, CreditCard, DollarSign, ClipboardList, ArrowRight, Clock, Plus, TrendingUp } from 'lucide-react';
+import { to12h } from '@/utils/formatoHora';
 
 function formatDate(d) {
   return d.toISOString().split('T')[0];
@@ -132,7 +133,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-gray-400">Cargando dashboard...</div>
+        <div className="text-muted-foreground">Cargando dashboard...</div>
       </div>
     );
   }
@@ -140,44 +141,44 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Resumen general de la clínica</p>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">Resumen general de la clínica</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/historial')}>
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-indigo-100 shrink-0">
-              <Users className="w-6 h-6 text-indigo-600" />
+            <div className="p-3 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 shrink-0">
+              <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Total Pacientes</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pacientes}</p>
+              <p className="text-xs text-muted-foreground font-medium">Total Pacientes</p>
+              <p className="text-2xl font-bold text-foreground">{stats.pacientes}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/agenda')}>
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-blue-100 shrink-0">
-              <Calendar className="w-6 h-6 text-blue-600" />
+            <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/40 shrink-0">
+              <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Citas Hoy</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.citasHoy}</p>
+              <p className="text-xs text-muted-foreground font-medium">Citas Hoy</p>
+              <p className="text-2xl font-bold text-foreground">{stats.citasHoy}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/agenda')}>
           <CardContent className="p-5 flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-amber-100 shrink-0">
-              <ClipboardList className="w-6 h-6 text-amber-600" />
+            <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/40 shrink-0">
+              <ClipboardList className="w-6 h-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Citas Pendientes</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.citasPendientes}</p>
+              <p className="text-xs text-muted-foreground font-medium">Citas Pendientes</p>
+              <p className="text-2xl font-bold text-foreground">{stats.citasPendientes}</p>
             </div>
           </CardContent>
         </Card>
@@ -185,12 +186,12 @@ export default function Dashboard() {
         {esAdmin && (
           <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/crediticio')}>
             <CardContent className="p-5 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-green-100 shrink-0">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/40 shrink-0">
+                <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 font-medium">Total Pagado</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-xs text-muted-foreground font-medium">Total Pagado</p>
+                <p className="text-2xl font-bold text-foreground">
                   RD$ {stats.totalCreditos.toLocaleString('es-DO', { minimumFractionDigits: 0 })}
                 </p>
               </div>
@@ -207,29 +208,29 @@ export default function Dashboard() {
               <Calendar className="w-5 h-5 text-blue-500" />
               Citas de Hoy
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/agenda')}>
+            <Button variant="ghost" size="sm" className="text-indigo-600 dark:text-indigo-400" onClick={() => navigate('/agenda')}>
               Ver todas <ArrowRight className="w-3 h-3 ml-1" />
             </Button>
           </CardHeader>
           <CardContent>
             {citasHoy.length === 0 ? (
-              <p className="text-center py-6 text-gray-400 text-sm">No hay citas programadas para hoy</p>
+              <p className="text-center py-6 text-muted-foreground text-sm">No hay citas programadas para hoy</p>
             ) : (
               <div className="space-y-2">
                 {citasHoy
                   .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''))
                   .map((c) => (
-                    <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={c.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700 shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-xs font-bold text-indigo-700 dark:text-indigo-300 shrink-0">
                           {(c.paciente?.nombres?.[0] || '?')}{(c.paciente?.apellidos?.[0] || '')}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {c.paciente ? `${c.paciente.nombres} ${c.paciente.apellidos}` : `Paciente #${c.pacienteId}`}
                           </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {c.hora && `${c.hora} — `}{c.procedimiento || 'Sin procedimiento'}
+                          <p className="text-xs text-muted-foreground truncate">
+{c.hora && `${to12h(c.hora)} — `}{c.procedimiento || 'Sin procedimiento'}
                           </p>
                         </div>
                       </div>
@@ -238,17 +239,17 @@ export default function Dashboard() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50 text-xs h-7 px-2"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 text-xs h-7 px-2"
                             onClick={() => openCobroDialog(c)}
                           >
                             📥 Cobrar
                           </Button>
                         )}
                         <Badge className={
-                          c.estado === 'realizada' ? 'bg-green-100 text-green-700' :
-                          c.estado === 'cancelada' ? 'bg-red-100 text-red-700' :
-                          c.estado === 'confirmada' ? 'bg-blue-100 text-blue-700' :
-                          'bg-yellow-100 text-yellow-700'
+                          c.estado === 'realizada' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' :
+                          c.estado === 'cancelada' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300' :
+                          c.estado === 'confirmada' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                          'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300'
                         }>
                           {c.estado}
                         </Badge>
@@ -267,29 +268,29 @@ export default function Dashboard() {
               <Clock className="w-5 h-5 text-amber-500" />
               Próximas Citas
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/agenda')}>
+            <Button variant="ghost" size="sm" className="text-indigo-600 dark:text-indigo-400" onClick={() => navigate('/agenda')}>
               Ver todas <ArrowRight className="w-3 h-3 ml-1" />
             </Button>
           </CardHeader>
           <CardContent>
             {citasProximas.length === 0 ? (
-              <p className="text-center py-6 text-gray-400 text-sm">No hay próximas citas programadas</p>
+              <p className="text-center py-6 text-muted-foreground text-sm">No hay próximas citas programadas</p>
             ) : (
               <div className="space-y-2">
                 {citasProximas.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={c.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                     <div className="flex items-center gap-3">
                       <div className="text-center">
-                        <p className="text-sm font-bold text-gray-900">{new Date(c.fecha + 'T12:00:00').getDate()}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">
+                        <p className="text-sm font-bold text-foreground">{new Date(c.fecha + 'T12:00:00').getDate()}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase">
                           {new Date(c.fecha + 'T12:00:00').toLocaleDateString('es-DO', { month: 'short' })}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-foreground">
                           {c.paciente ? `${c.paciente.nombres} ${c.paciente.apellidos}` : `Paciente #${c.pacienteId}`}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted-foreground">
                           {c.hora && `${c.hora} — `}{c.procedimiento || 'Sin procedimiento'}
                         </p>
                       </div>
@@ -310,33 +311,33 @@ export default function Dashboard() {
                 <TrendingUp className="w-5 h-5 text-green-500" />
                 Cobros Pendientes
               </CardTitle>
-              <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/crediticio')}>
+              <Button variant="ghost" size="sm" className="text-indigo-600 dark:text-indigo-400" onClick={() => navigate('/crediticio')}>
                 Ver todos <ArrowRight className="w-3 h-3 ml-1" />
               </Button>
             </CardHeader>
             <CardContent>
               {ultimosCreditos.length === 0 ? (
-                <p className="text-center py-6 text-gray-400 text-sm">No hay movimientos registrados</p>
+                <p className="text-center py-6 text-muted-foreground text-sm">No hay movimientos registrados</p>
               ) : (
                 <div className="space-y-2">
                   {ultimosCreditos.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={r.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="p-2 rounded-full bg-green-100 shrink-0">
-                          <DollarSign className="w-4 h-4 text-green-600" />
+                        <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/40 shrink-0">
+                          <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {r.paciente ? `${r.paciente.nombres} ${r.paciente.apellidos}` : `Paciente #${r.pacienteId}`}
                           </p>
-                          <p className="text-xs text-gray-500 truncate">{r.procedimiento || '—'} · {r.fecha}</p>
+                          <p className="text-xs text-muted-foreground truncate">{r.procedimiento || '—'} · {r.fecha}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <p className="text-sm font-semibold text-green-600">
+                        <p className="text-sm font-semibold text-green-600 dark:text-green-400">
                           {r.montoPagado ? `RD$ ${r.montoPagado.toLocaleString('es-DO', { minimumFractionDigits: 0 })}` : '—'}
                         </p>
-                        <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 text-xs h-7 px-2" onClick={() => navigate('/crediticio')}>
+                        <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-300 text-xs h-7 px-2" onClick={() => navigate('/crediticio')}>
                           Ver en Crediticio <ArrowRight className="w-3 h-3 ml-0.5" />
                         </Button>
                       </div>
@@ -360,39 +361,39 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link
                 to="/historial"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
               >
-                <div className="p-2.5 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 transition-colors">
-                  <Plus className="w-5 h-5 text-indigo-600" />
+                <div className="p-2.5 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 dark:bg-indigo-900/40 dark:group-hover:bg-indigo-900/60 transition-colors">
+                  <Plus className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Nuevo Paciente</p>
-                  <p className="text-xs text-gray-500">Registrar un nuevo paciente</p>
+                  <p className="text-sm font-semibold text-foreground">Nuevo Paciente</p>
+                  <p className="text-xs text-muted-foreground">Registrar un nuevo paciente</p>
                 </div>
               </Link>
               <Link
                 to="/agenda"
-                className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
               >
-                <div className="p-2.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 transition-colors">
-                  <Calendar className="w-5 h-5 text-blue-600" />
+                <div className="p-2.5 rounded-lg bg-blue-100 group-hover:bg-blue-200 dark:bg-blue-900/40 dark:group-hover:bg-blue-900/60 transition-colors">
+                  <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Agenda Hoy</p>
-                  <p className="text-xs text-gray-500">Ver y gestionar citas del día</p>
+                  <p className="text-sm font-semibold text-foreground">Agenda Hoy</p>
+                  <p className="text-xs text-muted-foreground">Ver y gestionar citas del día</p>
                 </div>
               </Link>
               {esAdmin && (
                 <Link
                   to="/crediticio"
-                  className="flex items-center gap-3 p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-300 hover:shadow-sm transition-all group"
+                  className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group"
                 >
-                  <div className="p-2.5 rounded-lg bg-green-100 group-hover:bg-green-200 transition-colors">
-                    <DollarSign className="w-5 h-5 text-green-600" />
+                  <div className="p-2.5 rounded-lg bg-green-100 group-hover:bg-green-200 dark:bg-green-900/40 dark:group-hover:bg-green-900/60 transition-colors">
+                    <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Crediticio</p>
-                    <p className="text-xs text-gray-500">Historial de pagos y cobros</p>
+                    <p className="text-sm font-semibold text-foreground">Crediticio</p>
+                    <p className="text-xs text-muted-foreground">Historial de pagos y cobros</p>
                   </div>
                 </Link>
               )}
@@ -412,12 +413,12 @@ export default function Dashboard() {
           </DialogHeader>
           {cobroCita && (
             <div className="space-y-4 py-4">
-              <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100">
-                <p className="text-sm font-medium text-gray-900">
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-lg p-3 border border-indigo-100 dark:border-indigo-900/50">
+                <p className="text-sm font-medium text-foreground">
                   {cobroCita.paciente ? `${cobroCita.paciente.nombres} ${cobroCita.paciente.apellidos}` : `Paciente #${cobroCita.pacienteId}`}
                 </p>
                 {cobroCita.hora && (
-                  <p className="text-xs text-indigo-600 mt-0.5">{cobroCita.hora} · {cobroCita.fecha}</p>
+                  <p className="text-xs text-indigo-600 dark:text-indigo-300 mt-0.5">{to12h(cobroCita.hora)} · {cobroCita.fecha}</p>
                 )}
               </div>
               <div className="space-y-2">

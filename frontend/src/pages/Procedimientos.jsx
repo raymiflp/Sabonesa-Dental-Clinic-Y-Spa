@@ -140,8 +140,8 @@ export default function Procedimientos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Procedimientos</h1>
-          <p className="text-sm text-gray-500 mt-1">Catálogo de procedimientos y categorías</p>
+          <h1 className="text-2xl font-bold text-foreground">Procedimientos</h1>
+          <p className="text-sm text-muted-foreground mt-1">Catálogo de procedimientos y categorías</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setCatDialogOpen(true)}>
@@ -152,10 +152,10 @@ export default function Procedimientos() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Cargando...</div>
+        <div className="text-center py-12 text-muted-foreground">Cargando...</div>
       ) : categorias.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-          <Stethoscope className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <div className="text-center py-12 text-muted-foreground border-2 border-dashed border-border rounded-lg">
+          <Stethoscope className="w-12 h-12 mx-auto mb-3 text-muted-foreground/60" />
           <p>No hay categorías registradas</p>
           <p className="text-sm mt-1">Crea una nueva categoría para comenzar</p>
         </div>
@@ -164,13 +164,13 @@ export default function Procedimientos() {
           {categorias.map((cat) => (
             <Card key={cat.id} className="overflow-hidden">
               <CardHeader
-                className="py-3 px-5 cursor-pointer hover:bg-gray-50 flex flex-row items-center justify-between"
+                className="py-3 px-5 cursor-pointer hover:bg-muted flex flex-row items-center justify-between"
                 onClick={() => toggleExpand(cat.id)}
               >
                 <div className="flex items-center gap-2">
-                  {expanded[cat.id] ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
-                  <CardTitle className="text-base font-semibold text-gray-800">{cat.nombre}</CardTitle>
-                  <Badge variant="outline" className="ml-2 text-xs bg-gray-50">
+                  {expanded[cat.id] ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+                  <CardTitle className="text-base font-semibold text-foreground">{cat.nombre}</CardTitle>
+                  <Badge variant="outline" className="ml-2 text-xs bg-muted">
                     {(cat.procedimientos || []).length} procedimientos
                   </Badge>
                 </div>
@@ -178,7 +178,7 @@ export default function Procedimientos() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                    className="text-primary hover:text-primary/80 hover:bg-accent"
                     onClick={(e) => { e.stopPropagation(); openNewProc(cat.id); }}
                   >
                     <Plus className="w-3.5 h-3.5 mr-1" />
@@ -187,7 +187,7 @@ export default function Procedimientos() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50"
+                    className="h-7 w-7 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                     title="Eliminar categoría"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -202,25 +202,25 @@ export default function Procedimientos() {
               {expanded[cat.id] && (
                 <CardContent className="px-5 pb-4 pt-0">
                   {(!cat.procedimientos || cat.procedimientos.length === 0) ? (
-                    <p className="text-sm text-gray-400 py-4 text-center">Sin procedimientos en esta categoría</p>
+                    <p className="text-sm text-muted-foreground py-4 text-center">Sin procedimientos en esta categoría</p>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-border">
                       {cat.procedimientos.map((proc) => (
                         <div key={proc.id} className="flex items-center justify-between py-2.5">
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-800">{proc.nombre}</p>
+                            <p className="text-sm font-medium text-foreground">{proc.nombre}</p>
                             {proc.descripcion && (
-                              <p className="text-xs text-gray-400 mt-0.5">{proc.descripcion}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{proc.descripcion}</p>
                             )}
                           </div>
                           <div className="flex items-center gap-4">
                             {proc.precioSugerido != null && (
-                              <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                              <span className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                                 <DollarSign className="w-3.5 h-3.5 text-green-500" />
                                 {proc.precioSugerido.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
                               </span>
                             )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400" title="Editar" onClick={() => openEditProc(proc)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" title="Editar" onClick={() => openEditProc(proc)}>
                               <Edit2 className="w-3.5 h-3.5" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" title="Eliminar" onClick={() => handleDeleteProc(proc.id, proc.nombre)}>

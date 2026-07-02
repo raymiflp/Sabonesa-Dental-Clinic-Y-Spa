@@ -24,16 +24,16 @@ const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 
 const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const estados = ['pendiente', 'confirmada', 'realizada', 'cancelada'];
 const estadoColors = {
-  pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  confirmada: 'bg-blue-100 text-blue-800 border-blue-300',
-  realizada: 'bg-green-100 text-green-800 border-green-300',
-  cancelada: 'bg-red-100 text-red-800 border-red-300',
+  pendiente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border-yellow-300',
+  confirmada: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-300',
+  realizada: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border-green-300',
+  cancelada: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300 border-red-300',
 };
 const estadoBadge = {
-  pendiente: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  confirmada: 'bg-blue-50 text-blue-700 border-blue-200',
-  realizada: 'bg-green-50 text-green-700 border-green-200',
-  cancelada: 'bg-red-50 text-red-700 border-red-200',
+  pendiente: 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200',
+  confirmada: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200',
+  realizada: 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200',
+  cancelada: 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200',
 };
 
 function formatDate(d) {
@@ -288,8 +288,8 @@ export default function Agenda() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-          <p className="text-sm text-gray-500 mt-1">Calendario de citas y procedimientos</p>
+          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+          <p className="text-sm text-muted-foreground mt-1">Calendario de citas y procedimientos</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={filtroEstado} onValueChange={setFiltroEstado}>
@@ -310,17 +310,17 @@ export default function Agenda() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calendar */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-card rounded-lg border border-border p-4">
           <div className="flex items-center justify-between mb-4">
             <Button variant="ghost" size="icon" onClick={prevMonth} className="h-8 w-8">
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <h3 className="font-semibold text-gray-900">{months[currentMonth]} {currentYear}</h3>
+            <h3 className="font-semibold text-foreground">{months[currentMonth]} {currentYear}</h3>
             <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8">
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-7 gap-0.5 md:gap-1 text-center text-xs font-medium text-gray-500 mb-2">
+          <div className="grid grid-cols-7 gap-0.5 md:gap-1 text-center text-xs font-medium text-muted-foreground mb-2">
             {weekDays.map((d) => <div key={d} className="py-1">{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-0.5 md:gap-1">
@@ -333,16 +333,16 @@ export default function Agenda() {
                       onClick={() => handleDayClick(day)}
                       className={`w-full h-full min-h-[32px] min-w-[32px] rounded-lg text-xs md:text-sm font-medium transition-colors relative
                         ${ds === selectedDate
-                          ? 'bg-indigo-500 text-white shadow-sm'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
                           : isCurrentDay(day)
-                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-accent text-foreground border border-border'
+                            : 'text-muted-foreground hover:bg-accent'
                         }`}
                     >
                       {day}
                       {hasCitasOnDay(day) && (
                         <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ${
-                          ds === selectedDate ? 'bg-white' : 'bg-indigo-400'
+                          ds === selectedDate ? 'bg-primary-foreground' : 'bg-primary'
                         }`} />
                       )}
                     </button>
@@ -354,10 +354,10 @@ export default function Agenda() {
         </div>
 
         {/* Selected day citas */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <div className="bg-card rounded-lg border border-border p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-indigo-500" />
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-primary" />
               {(() => {
                 const d = new Date(selectedDate + 'T12:00:00');
                 return d.toLocaleDateString('es-DO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -369,7 +369,7 @@ export default function Agenda() {
           </div>
 
           {selectedCitas.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-muted-foreground">
               <CalendarDays className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No hay citas para este día</p>
               <Button variant="outline" size="sm" className="mt-3" onClick={() => { setForm({ ...form, fecha: selectedDate }); setDialogOpen(true); }}>
@@ -382,22 +382,22 @@ export default function Agenda() {
               {selectedCitas
                 .sort((a, b) => (a.hora || '').localeCompare(b.hora || ''))
                 .map((c) => (
-                <div key={c.id} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
+                <div key={c.id} className="border border-border rounded-lg p-3 hover:shadow-sm transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Link to={`/historial/${c.pacienteId}`} className="font-semibold text-gray-900 hover:text-indigo-600 hover:underline">{getPacienteName(c.pacienteId)}</Link>
+                        <Link to={`/historial/${c.pacienteId}`} className="font-semibold text-foreground hover:text-primary hover:underline">{getPacienteName(c.pacienteId)}</Link>
                         {c.hora && (
-                          <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Clock className="w-3 h-3" /> {to12h(c.hora)}
                           </span>
                         )}
                       </div>
                       {c.procedimiento && (
-                        <p className="text-sm text-gray-600">{c.procedimiento}</p>
+                        <p className="text-sm text-muted-foreground">{c.procedimiento}</p>
                       )}
                       {c.notas && (
-                        <p className="text-xs text-gray-400 italic">{c.notas}</p>
+                        <p className="text-xs text-muted-foreground italic">{c.notas}</p>
                       )}
                       <div className="flex items-center gap-2 pt-1">
                         <Select value={c.estado} onValueChange={(v) => handleEstadoChange(c.id, v)}>
@@ -410,11 +410,11 @@ export default function Agenda() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <Badge variant="outline" className={`text-[10px] ${c.origen === 'automatico' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                        <Badge variant="outline" className={`text-[10px] ${c.origen === 'automatico' ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200' : 'bg-muted text-muted-foreground border-border'}`}>
                           {c.origen === 'automatico' ? 'Auto' : 'Manual'}
                         </Badge>
                         {c.estado === 'realizada' && (
-                          <Button size="sm" variant="outline" className="h-6 text-[11px] text-green-600 border-green-200 hover:bg-green-50 px-2"
+                          <Button size="sm" variant="outline" className="h-6 text-[11px] text-green-600 border-green-200 hover:bg-green-50 dark:hover:bg-green-900/30 px-2"
                             onClick={() => openCobro(c)}>
                             <DollarSign className="w-3 h-3 mr-1" />
                             Cobrar ahora
@@ -423,7 +423,7 @@ export default function Agenda() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-indigo-600 shrink-0" title="Editar" onClick={() => handleEdit(c)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary shrink-0" title="Editar" onClick={() => handleEdit(c)}>
                         <Pencil className="w-3.5 h-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-600 shrink-0" title="Eliminar" onClick={() => handleDelete(c.id)}>
@@ -482,7 +482,7 @@ export default function Agenda() {
                   onFocus={() => setProcSearchOpen(true)}
                 />
                 {procSearchOpen && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {Object.entries(procedimientosPorCategoria).map(([categoria, procs]) => {
                       const filtrados = procs.filter(p =>
                         !form.procedimiento || p.nombre.toLowerCase().includes(form.procedimiento.toLowerCase())
@@ -490,14 +490,14 @@ export default function Agenda() {
                       if (filtrados.length === 0) return null;
                       return (
                         <div key={categoria}>
-                          <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50 sticky top-0 border-b border-gray-100">
+                          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted sticky top-0 border-b border-border">
                             {categoria}
                           </div>
                           {filtrados.map((p) => (
                             <button
                               key={p.id}
                               type="button"
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 border-b border-gray-50 last:border-0 flex items-center justify-between"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent border-b border-border last:border-0 flex items-center justify-between"
                               onClick={() => {
                                 setForm({ ...form, procedimiento: p.nombre });
                                 setProcSearchOpen(false);
@@ -505,7 +505,7 @@ export default function Agenda() {
                             >
                               <span>{p.nombre}</span>
                               {p.precioSugerido && (
-                                <span className="text-xs text-gray-400">RD$ {p.precioSugerido}</span>
+                                <span className="text-xs text-muted-foreground">RD$ {p.precioSugerido}</span>
                               )}
                             </button>
                           ))}
@@ -515,7 +515,7 @@ export default function Agenda() {
                     {Object.values(procedimientosPorCategoria).every(procs =>
                       procs.every(p => form.procedimiento && !p.nombre.toLowerCase().includes(form.procedimiento.toLowerCase()))
                     ) && (
-                      <div className="px-3 py-4 text-sm text-gray-400 text-center">
+                      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                         Sin resultados para "{form.procedimiento}"
                       </div>
                     )}

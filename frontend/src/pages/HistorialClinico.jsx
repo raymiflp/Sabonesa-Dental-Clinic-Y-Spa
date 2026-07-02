@@ -79,7 +79,7 @@ function CheckboxGroup({ options, values, onChange, columns = 2 }) {
   return (
     <div className={`grid grid-cols-1 md:grid-cols-${columns} gap-2`}>
       {options.map((opt) => (
-        <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 rounded px-2 py-1">
+        <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted rounded px-2 py-1">
           <input
             type="checkbox"
             checked={(values || []).includes(opt)}
@@ -90,7 +90,7 @@ function CheckboxGroup({ options, values, onChange, columns = 2 }) {
                 : [...current, opt];
               onChange(next);
             }}
-            className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="rounded border-input text-primary focus:ring-primary"
           />
           {opt}
         </label>
@@ -843,16 +843,16 @@ export default function HistorialClinico() {
       return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-gray-50 py-3 sm:py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-gray-200 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between sticky top-0 bg-background py-3 sm:py-4 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-border gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Link to="/" className="text-gray-400 hover:text-gray-600 shrink-0">
+            <Link to="/" className="text-muted-foreground hover:text-foreground shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">Historial Clínico</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground truncate">Historial Clínico</h1>
           </div>
           {paciente && (
-            <p className="text-xs sm:text-sm text-gray-500 mt-0.5 truncate">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 truncate">
               {paciente.nombres} {paciente.apellidos}
               {paciente.edad && <> | {paciente.edad} años</>}
               {paciente.cedula && <> | {paciente.cedula}</>}
@@ -861,19 +861,19 @@ export default function HistorialClinico() {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {paciente?.telefono && (
-            <span className="hidden sm:inline text-xs text-gray-400 mr-1">
+            <span className="hidden sm:inline text-xs text-muted-foreground mr-1">
               <Phone className="w-3 h-3 inline -mt-0.5" /> {paciente.telefono}
               {paciente.tieneWhatsapp ? (
                 <a href={`https://wa.me/${paciente.telefono.replace(/[^\d]/g, '')}?text=Hola ${paciente.nombres}, soy de Betty Dental`}
-                  target="_blank" rel="noopener noreferrer" className="ml-1 text-green-600 hover:text-green-700" title="WhatsApp">
+                  target="_blank" rel="noopener noreferrer" className="ml-1 text-green-600 hover:text-green-700 dark:hover:text-green-400" title="WhatsApp">
                   <MessageCircle className="w-3.5 h-3.5 inline" />
                 </a>
               ) : (
-                <X className="w-3 h-3 inline ml-1 text-gray-300" />
+                <X className="w-3 h-3 inline ml-1 text-muted-foreground/60" />
               )}
             </span>
           )}
-          <Button onClick={generatePDF} variant="outline" size="sm" className="border-gray-300 text-gray-600 hover:text-indigo-600 hover:border-indigo-300 h-8 sm:h-9">
+          <Button onClick={generatePDF} variant="outline" size="sm" className="border-border text-muted-foreground hover:text-primary hover:border-primary/40 h-8 sm:h-9">
             <FileDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
             <span className="hidden sm:inline">PDF</span>
           </Button>
@@ -881,7 +881,7 @@ export default function HistorialClinico() {
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <><Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" /> <span className="hidden sm:inline">Guardar</span></>}
           </Button>
           {historial?.id && (
-            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50 h-8 sm:h-9" onClick={handleDeleteHistorial}>
+            <Button variant="outline" size="sm" className="border-red-200 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 h-8 sm:h-9" onClick={handleDeleteHistorial}>
               <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </Button>
           )}
@@ -893,7 +893,7 @@ export default function HistorialClinico() {
         {/* Mobile: compact Select (menú en un box, info en otro box) */}
         <div className="sm:hidden mb-4">
           <Select value={activeTab} onValueChange={setActiveTab}>
-            <SelectTrigger className="w-full bg-white border-indigo-200 text-sm font-medium">
+            <SelectTrigger className="w-full bg-card border-primary/40 text-sm font-medium">
               <SelectValue>
                 {activeTab === 'agenda' && 'Agenda'}
                 {activeTab === 'presupuesto' && 'Presupuesto'}
@@ -924,42 +924,42 @@ export default function HistorialClinico() {
 
         {/* Desktop: horizontal tabs */}
         <TabsList className="hidden sm:flex sm:flex-wrap h-auto gap-1 bg-transparent p-0.5">
-          <TabsTrigger value="agenda" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200 data-[state=active]:border-indigo-600 text-xs">
+          <TabsTrigger value="agenda" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-200 dark:border-indigo-900/50 data-[state=active]:border-indigo-600 text-xs">
             <Calendar className="w-3.5 h-3.5 mr-1" />
             Agenda
           </TabsTrigger>
-          <TabsTrigger value="presupuesto" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 data-[state=active]:border-emerald-600 text-xs">
+          <TabsTrigger value="presupuesto" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-900/50 data-[state=active]:border-emerald-600 text-xs">
             <DollarSign className="w-3.5 h-3.5 mr-1" />
             Presupuesto
           </TabsTrigger>
-          <TabsTrigger value="antecedentes" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Antecedentes</TabsTrigger>
-          <TabsTrigger value="cuestionarios" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Cuestionarios</TabsTrigger>
-          <TabsTrigger value="estado" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Estado Actual</TabsTrigger>
-          <TabsTrigger value="examen" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Ex. Facial</TabsTrigger>
-          <TabsTrigger value="anomalias" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Anomalías</TabsTrigger>
-          <TabsTrigger value="evolucion" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Evolución</TabsTrigger>
-          <TabsTrigger value="odontograma" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Odontograma</TabsTrigger>
-          <TabsTrigger value="fotos" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 text-xs">Fotos / Rx</TabsTrigger>
+          <TabsTrigger value="antecedentes" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Antecedentes</TabsTrigger>
+          <TabsTrigger value="cuestionarios" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Cuestionarios</TabsTrigger>
+          <TabsTrigger value="estado" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Estado Actual</TabsTrigger>
+          <TabsTrigger value="examen" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Ex. Facial</TabsTrigger>
+          <TabsTrigger value="anomalias" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Anomalías</TabsTrigger>
+          <TabsTrigger value="evolucion" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Evolución</TabsTrigger>
+          <TabsTrigger value="odontograma" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Odontograma</TabsTrigger>
+          <TabsTrigger value="fotos" className="data-[state=active]:bg-indigo-100 data-[state=active]:text-indigo-700 dark:data-[state=active]:bg-indigo-900/50 dark:data-[state=active]:text-indigo-300 text-xs">Fotos / Rx</TabsTrigger>
         </TabsList>
 
         {/* Tab: Agenda del Paciente */}
         <TabsContent value="agenda" className="mt-4">
-          <Card className="border-indigo-200 ring-1 ring-indigo-100">
-            <CardHeader className="flex flex-row items-center justify-between bg-indigo-50/50">
-              <CardTitle className="text-lg flex items-center gap-2 text-indigo-800">
+          <Card className="border-indigo-200 dark:border-indigo-900/50 ring-1 ring-indigo-100 dark:ring-indigo-900/30">
+            <CardHeader className="flex flex-row items-center justify-between bg-indigo-50/50 dark:bg-indigo-900/20">
+              <CardTitle className="text-lg flex items-center gap-2 text-indigo-800 dark:text-indigo-300">
                 <Calendar className="w-5 h-5" />
                 Agenda del Paciente
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setCitaDialogOpen(true)} className="border-indigo-300 text-indigo-700 hover:bg-indigo-100">
+              <Button variant="outline" size="sm" onClick={() => setCitaDialogOpen(true)} className="border-indigo-300 text-indigo-700 dark:border-indigo-900/50 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/30">
                 <Plus className="w-4 h-4 mr-1" />
                 Agregar Cita
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
+                    <TableRow className="bg-muted">
                       <TableHead className="font-semibold">Fecha</TableHead>
                       <TableHead className="font-semibold">Hora</TableHead>
                       <TableHead className="font-semibold">Procedimiento</TableHead>
@@ -970,7 +970,7 @@ export default function HistorialClinico() {
                   <TableBody>
                     {(!form.agendaPaciente || form.agendaPaciente.length === 0) ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-6 text-gray-400">
+                        <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                           Sin citas agendadas
                         </TableCell>
                       </TableRow>
@@ -982,16 +982,16 @@ export default function HistorialClinico() {
                           <TableCell>{c.procedimiento || '—'}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className={
-                              c.estado === 'realizada' ? 'bg-green-50 text-green-700 border-green-200' :
-                              c.estado === 'cancelada' ? 'bg-red-50 text-red-700 border-red-200' :
-                              'bg-yellow-50 text-yellow-700 border-yellow-200'
+                              c.estado === 'realizada' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200' :
+                              c.estado === 'cancelada' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200' :
+                              'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200'
                             }>
                               {c.estado || 'pendiente'}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-indigo-600" title="Editar" onClick={() => editCitaAgenda(c)}>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" title="Editar" onClick={() => editCitaAgenda(c)}>
                                 <Pencil className="w-3.5 h-3.5" />
                               </Button>
                               <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" onClick={() => removeCitaAgenda(c.id)}>
@@ -1005,7 +1005,7 @@ export default function HistorialClinico() {
                   </TableBody>
                 </Table>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 Al guardar el historial, las citas se sincronizan automáticamente con la agenda general.
               </p>
             </CardContent>
@@ -1172,23 +1172,23 @@ export default function HistorialClinico() {
               </CardHeader>
               <CardContent>
                 {presupuestos.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400">
+                  <div className="text-center py-8 text-muted-foreground">
                     No hay presupuestos registrados. Crea uno nuevo con el botón de arriba.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {presupuestos.map((p) => (
-                      <div key={p.id} className="border border-gray-200 rounded-lg p-4 hover:border-indigo-200 transition-colors">
+                      <div key={p.id} className="border border-border rounded-lg p-4 hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-colors">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <span className="font-semibold text-gray-900">{formatDateDDMMYYYY(p.fecha)}</span>
+                            <span className="font-semibold text-foreground">{formatDateDDMMYYYY(p.fecha)}</span>
                             <select
                               value={p.estado || 'pendiente'}
                               onChange={(e) => cambiarEstadoPresupuesto(p.id, e.target.value)}
                               className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full border-0 bg-transparent cursor-pointer outline-none ${
-                                p.estado === 'aceptado' ? 'text-green-700' :
-                                p.estado === 'rechazado' ? 'text-red-700' :
-                                'text-yellow-700'
+                                p.estado === 'aceptado' ? 'text-green-700 dark:text-green-400' :
+                                p.estado === 'rechazado' ? 'text-red-700 dark:text-red-400' :
+                                'text-yellow-700 dark:text-yellow-400'
                               }`}
                               style={{ backgroundColor: p.estado === 'aceptado' ? '#f0fdf4' : p.estado === 'rechazado' ? '#fef2f2' : '#fefce8' }}
                             >
@@ -1198,7 +1198,7 @@ export default function HistorialClinico() {
                             </select>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-indigo-600">
+                            <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                               RD$ {(p.montoTotal || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
                             </span>
                             {p.estado === 'aceptado' && (
@@ -1206,10 +1206,10 @@ export default function HistorialClinico() {
                                 <Calendar className="w-3.5 h-3.5" />
                               </Button>
                             )}
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400" title="Editar presupuesto" onClick={() => handleEditPresupuesto(p)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" title="Editar presupuesto" onClick={() => handleEditPresupuesto(p)}>
                               <Pencil className="w-3.5 h-3.5" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400" title="Imprimir presupuesto" onClick={() => generatePresupuestoPDF(p)}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" title="Imprimir presupuesto" onClick={() => generatePresupuestoPDF(p)}>
                               <FileDown className="w-3.5 h-3.5" />
                             </Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400" onClick={() => deletePresupuesto(p.id)}>
@@ -1218,7 +1218,7 @@ export default function HistorialClinico() {
                           </div>
                         </div>
                         {p.items && p.items.length > 0 && (
-                          <div className="text-xs text-gray-500 space-y-1">
+                          <div className="text-xs text-muted-foreground space-y-1">
                             {p.items.map((item, i) => (
                               <div key={i} className="flex justify-between">
                                 <span>{item.nombre} x{item.cantidad}</span>
@@ -1228,7 +1228,7 @@ export default function HistorialClinico() {
                           </div>
                         )}
                         {p.notas && (
-                          <p className="text-xs text-gray-400 mt-2 italic">{p.notas}</p>
+                          <p className="text-xs text-muted-foreground mt-2 italic">{p.notas}</p>
                         )}
                       </div>
                     ))}
@@ -1272,7 +1272,7 @@ export default function HistorialClinico() {
                   onFocus={() => setCitaProcSearchOpen(true)}
                 />
                 {citaProcSearchOpen && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {Object.entries(procedimientosPorCategoria).map(([categoria, procs]) => {
                       const filtrados = procs.filter(p =>
                         !nuevaCita.procedimiento || p.nombre.toLowerCase().includes(nuevaCita.procedimiento.toLowerCase())
@@ -1280,14 +1280,14 @@ export default function HistorialClinico() {
                       if (filtrados.length === 0) return null;
                       return (
                         <div key={categoria}>
-                          <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50 sticky top-0 border-b border-gray-100">
+                          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted sticky top-0 border-b border-border">
                             {categoria}
                           </div>
                           {filtrados.map((p) => (
                             <button
                               key={p.id}
                               type="button"
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 border-b border-gray-50 last:border-0"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent border-b border-border last:border-0"
                               onClick={() => {
                                 setNuevaCita({ ...nuevaCita, procedimiento: p.nombre });
                                 setCitaProcSearchOpen(false);
@@ -1302,7 +1302,7 @@ export default function HistorialClinico() {
                     {Object.values(procedimientosPorCategoria).every(procs =>
                       procs.every(p => nuevaCita.procedimiento && !p.nombre.toLowerCase().includes(nuevaCita.procedimiento.toLowerCase()))
                     ) && (
-                      <div className="px-3 py-4 text-sm text-gray-400 text-center">
+                      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                         Sin resultados para "{nuevaCita.procedimiento}"
                       </div>
                     )}
@@ -1337,9 +1337,9 @@ export default function HistorialClinico() {
               <Label className="mb-2 block">Procedimientos</Label>
               <div className="space-y-2 mb-3">
                 {presupForm.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                  <div key={item.id} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2 text-sm">
                     <span className="font-medium">{item.nombre}</span>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       x{item.cantidad} — RD$ {(item.cantidad * item.precio).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
                     </span>
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-red-400" onClick={() => removePresupItem(item.id)}>
@@ -1361,7 +1361,7 @@ export default function HistorialClinico() {
                   onFocus={() => setProcSearchOpen(true)}
                 />
                 {procSearchOpen && (
-                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {Object.entries(procedimientosPorCategoria).map(([categoria, procs]) => {
                       const filtrados = procs.filter(p =>
                         !presupItem.nombre || p.nombre.toLowerCase().includes(presupItem.nombre.toLowerCase())
@@ -1369,14 +1369,14 @@ export default function HistorialClinico() {
                       if (filtrados.length === 0) return null;
                       return (
                         <div key={categoria}>
-                          <div className="px-3 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50 sticky top-0 border-b border-gray-100">
+                          <div className="px-3 py-1.5 text-xs font-semibold text-muted-foreground bg-muted sticky top-0 border-b border-border">
                             {categoria}
                           </div>
                           {filtrados.map((p) => (
                             <button
                               key={p.id}
                               type="button"
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-indigo-50 border-b border-gray-50 last:border-0 flex items-center justify-between"
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-accent border-b border-border last:border-0 flex items-center justify-between"
                               onClick={() => {
                                 setPresupItem({ ...presupItem, nombre: p.nombre, precio: p.precioSugerido || 0 });
                                 setProcSearchOpen(false);
@@ -1384,7 +1384,7 @@ export default function HistorialClinico() {
                             >
                               <span>{p.nombre}</span>
                               {p.precioSugerido && (
-                                <span className="text-xs text-gray-400">RD$ {p.precioSugerido}</span>
+                                <span className="text-xs text-muted-foreground">RD$ {p.precioSugerido}</span>
                               )}
                             </button>
                           ))}
@@ -1394,7 +1394,7 @@ export default function HistorialClinico() {
                     {Object.values(procedimientosPorCategoria).every(procs =>
                       procs.every(p => presupItem.nombre && !p.nombre.toLowerCase().includes(presupItem.nombre.toLowerCase()))
                     ) && (
-                      <div className="px-3 py-4 text-sm text-gray-400 text-center">
+                      <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                         Sin resultados para "{presupItem.nombre}"
                       </div>
                     )}
@@ -1418,7 +1418,7 @@ export default function HistorialClinico() {
                   onChange={(e) => setPresupItem({ ...presupItem, precio: parseFloat(e.target.value) || 0 })}
                 />
               </div>
-              <Button variant="ghost" size="sm" onClick={addPresupItem} className="mt-2 text-indigo-600" disabled={!presupItem.nombre}>
+              <Button variant="ghost" size="sm" onClick={addPresupItem} className="mt-2 text-primary" disabled={!presupItem.nombre}>
                 + Agregar procedimiento
               </Button>
             </div>

@@ -133,8 +133,8 @@ export default function PatientList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Historial Clínico</h1>
-          <p className="text-sm text-gray-500 mt-1">Selecciona un paciente para ver o editar su historial clínico</p>
+          <h1 className="text-2xl font-bold text-foreground">Historial Clínico</h1>
+          <p className="text-sm text-muted-foreground mt-1">Selecciona un paciente para ver o editar su historial clínico</p>
         </div>
         <Button onClick={openNew} className="bg-indigo-600 hover:bg-indigo-700 text-white">
           <Plus className="w-4 h-4 mr-1" />
@@ -143,7 +143,7 @@ export default function PatientList() {
       </div>
 
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
           placeholder="Buscar paciente..."
           value={search}
@@ -152,10 +152,10 @@ export default function PatientList() {
         />
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow className="bg-muted">
               <TableHead className="font-semibold">Nombres</TableHead>
               <TableHead className="font-semibold">Apellidos</TableHead>
               <TableHead className="font-semibold">Teléfono</TableHead>
@@ -166,19 +166,19 @@ export default function PatientList() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   Cargando pacientes...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {search ? 'No se encontraron pacientes' : 'No hay pacientes registrados'}
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((p) => (
-                <TableRow key={p.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/historial/${p.id}`)}>
+                <TableRow key={p.id} className="hover:bg-muted cursor-pointer" onClick={() => navigate(`/historial/${p.id}`)}>
                   <TableCell className="font-medium">{p.nombres}</TableCell>
                   <TableCell>{p.apellidos}</TableCell>
                   <TableCell>
@@ -186,7 +186,7 @@ export default function PatientList() {
                       <span className="inline-flex items-center gap-1">
                         {p.telefono}
                         {p.tieneWhatsapp ? (
-                          <span className="inline-flex items-center gap-1 text-green-600">
+                          <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
                             <BadgeCheck className="w-4 h-4" title="Tiene WhatsApp" />
                             <a
                               href={`https://wa.me/${p.telefono.replace(/[^\d]/g, '')}?text=Hola ${p.nombres}, soy de Betty Dental`}
@@ -195,11 +195,11 @@ export default function PatientList() {
                               onClick={(e) => e.stopPropagation()}
                               title="Enviar WhatsApp"
                             >
-                              <MessageCircle className="w-4 h-4 hover:text-green-700" />
+                              <MessageCircle className="w-4 h-4 hover:text-green-700 dark:hover:text-green-400" />
                             </a>
                           </span>
                         ) : (
-                          <X className="w-4 h-4 text-gray-300" title="No tiene WhatsApp" />
+                          <X className="w-4 h-4 text-muted-foreground/60" title="No tiene WhatsApp" />
                         )}
                       </span>
                     ) : '—'}
@@ -210,7 +210,7 @@ export default function PatientList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                        className="text-primary hover:text-primary/80 hover:bg-accent"
                         onClick={(e) => { e.stopPropagation(); navigate(`/historial/${p.id}`); }}
                       >
                         <Stethoscope className="w-4 h-4 mr-1" />
@@ -219,7 +219,7 @@ export default function PatientList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-amber-600 hover:text-amber-800 hover:bg-amber-50"
+                        className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
                         onClick={(e) => { e.stopPropagation(); openEdit(p); }}
                       >
                         <Pencil className="w-4 h-4" />
@@ -227,7 +227,7 @@ export default function PatientList() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-400 hover:text-red-600 hover:bg-red-50"
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                         onClick={(e) => { e.stopPropagation(); handleDelete(p.id, `${p.nombres} ${p.apellidos}`); }}
                       >
                         <Trash2 className="w-4 h-4" />
@@ -265,12 +265,12 @@ export default function PatientList() {
               <Input id="telefono" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} />
             </div>
             <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground">
                 <input
                   type="checkbox"
                   checked={form.tieneWhatsapp}
                   onChange={(e) => setForm({ ...form, tieneWhatsapp: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  className="w-4 h-4 rounded border-input text-green-600 focus:ring-green-500"
                 />
                 Tiene WhatsApp
               </label>
