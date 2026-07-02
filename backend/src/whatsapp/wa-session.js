@@ -200,6 +200,7 @@ class WaSession {
 
         if (connection === 'close') {
           this.isConnected = false;
+          this.phoneNumber = null;
           const shouldReconnect = (lastDisconnect?.error instanceof Boom)
             ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
             : true;

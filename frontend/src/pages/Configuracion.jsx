@@ -219,7 +219,7 @@ export default function Configuracion() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-700">Estado de conexión</p>
-                  {whatsappStatus?.phoneNumber ? (
+                  {whatsappStatus?.connected && whatsappStatus?.phoneNumber ? (
                     <p className="text-sm text-green-600 mt-1">
                       ✅ Conectado como <span className="font-semibold">{whatsappStatus.phoneNumber}</span>
                     </p>
