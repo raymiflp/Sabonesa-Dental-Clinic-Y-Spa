@@ -25,7 +25,9 @@ export class WhatsAppWebProvider extends WhatsAppProvider {
     }
 
     // Formato JID: {país}código@s.whatsapp.net
-    const jid = `${telefonoLimpio}@s.whatsapp.net`;
+    // Asumir +1 (RD) si el teléfono llega en formato local de 10 dígitos (809/829/849...)
+    const telefonoCompleto = telefonoLimpio.length === 10 ? '1' + telefonoLimpio : telefonoLimpio;
+    const jid = `${telefonoCompleto}@s.whatsapp.net`;
 
     try {
       const result = await sock.sendMessage(jid, { text: mensaje || '' });
