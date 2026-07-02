@@ -31,6 +31,16 @@ function renderMensaje(template, vars) {
     .replace(/\{procedimiento\}/g, vars.procedimiento || '');
 }
 
+/** Formatea fecha como DD/MM/YYYY. Acepta Date (Prisma) o string ISO/YYYY-MM-DD. */
+function formatFecha(fecha) {
+  if (!fecha) return '';
+  const d = new Date(fecha);
+  if (isNaN(d)) return '';
+  const dia = String(d.getUTCDate()).padStart(2, '0');
+  const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${dia}/${mes}/${d.getUTCFullYear()}`;
+}
+
 /**
  * Espera N ms (promise)
  */
@@ -135,7 +145,7 @@ export async function checkAndSendReminders(prisma) {
       const mensaje = renderMensaje(plantillaRecordatorio, {
         nombre,
         clinica: clinicaNombre,
-        fecha: cita.fecha,
+        fecha: formatFecha(cita.fecha),
         hora: cita.hora || '—',
         procedimiento: cita.procedimiento || '',
       });
@@ -231,7 +241,7 @@ export async function sendConfirmacionCita(prisma, citaId) {
     const mensaje = renderMensaje(plantilla, {
       nombre,
       clinica: clinicaNombre,
-      fecha: cita.fecha,
+      fecha: formatFecha(cita.fecha),
       hora: cita.hora || '—',
       procedimiento: cita.procedimiento || '',
     });
@@ -296,7 +306,7 @@ export async function sendCancelacionCita(prisma, citaId) {
     const mensaje = renderMensaje(plantilla, {
       nombre,
       clinica: clinicaNombre,
-      fecha: cita.fecha,
+      fecha: formatFecha(cita.fecha),
       hora: cita.hora || '',
     });
 
