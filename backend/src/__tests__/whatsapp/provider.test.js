@@ -12,11 +12,11 @@ vi.mock('@whiskeysockets/baileys', () => ({
 }));
 vi.mock('../../whatsapp/wa-session.js', () => ({ waSession: {} }));
 
-// Mock the four providers so we control exactly what they return.
+// Mock the two providers so we control exactly what they return.
 // This is the entire surface of the bug #1 fix: when the primary provider
 // fails, sendStrict MUST return exito:false — no wa.me fallback, no exito:true.
-vi.mock('../../whatsapp/providers/wa.js', () => ({
-  WaMeProvider: class {
+vi.mock('../../whatsapp/providers/manual.js', () => ({
+  ManualProvider: class {
     async send() {
       // The fallback provider would happily return exito:true with a waUrl.
       // sendStrict must NOT call this — we assert that by checking waUrl stays null.
@@ -30,12 +30,6 @@ vi.mock('../../whatsapp/providers/web.js', () => ({
       return { exito: false, messageId: null, error: 'WhatsApp Web no conectado', waUrl: null };
     }
   },
-}));
-vi.mock('../../whatsapp/providers/twilio.js', () => ({
-  TwilioProvider: class { async send() { return { exito: false, error: 'nope', waUrl: null }; } },
-}));
-vi.mock('../../whatsapp/providers/waba.js', () => ({
-  WabaProvider: class { async send() { return { exito: false, error: 'nope', waUrl: null }; } },
 }));
 
 import { ProviderResolver } from '../../whatsapp/provider.js';
@@ -93,17 +87,17 @@ describe('ProviderResolver.sendStrict', () => {
     expect(result.waUrl).toBeNull();
   });
 
-  // Regression guard for H1: when mode='wa' the active provider IS WaMeProvider,
+  // Regression guard for H1: when mode='manual' the active provider IS ManualProvider,
   // whose deliverable is the deeplink. sendStrict MUST preserve that waUrl —
   // dropping it would persist whatsappUrl=null and leave the operator without
   // the link they actually generated.
-  it('preserves waUrl when mode=wa (the active provider IS wa.me)', async () => {
-    const resolver = new ProviderResolver(makePrismaMock('wa', 'never'));
+  it('preserves waUrl when mode=manual (the active provider IS wa.me)', async () => {
+    const resolver = new ProviderResolver(makePrismaMock('manual', 'never'));
     const result = await resolver.sendStrict({
       telefono: '5491122334455',
       mensaje: 'recordatorio cita',
       paciente: { nombres: 'Test' },
-      prisma: makePrismaMock('wa', 'never'),
+      prisma: makePrismaMock('manual', 'never'),
     });
 
     expect(result.exito).toBe(true);

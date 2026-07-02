@@ -155,7 +155,7 @@ async function main() {
     { clave: 'clinica_nombre', valor: 'Sabonesa Dental Clinic Y Spa' },
     { clave: 'clinica_direccion', valor: '' },
     { clave: 'clinica_telefono', valor: '' },
-    { clave: 'whatsapp_provider_mode', valor: 'wa' },
+    { clave: 'whatsapp_provider_mode', valor: 'manual' },
     { clave: 'recordatorio_habilitado', valor: 'false' },
     { clave: 'recordatorio_hora', valor: '08:00' },
     { clave: 'recordatorio_anticipacion_dias', valor: '1' },

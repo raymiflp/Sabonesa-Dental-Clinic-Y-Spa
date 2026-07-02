@@ -17,7 +17,7 @@ router.get('/status', async (req, res) => {
     configs.forEach(c => { cfg[c.clave] = c.valor; });
 
     res.json({
-      mode: cfg.whatsapp_provider_mode || 'wa',
+      mode: cfg.whatsapp_provider_mode || 'manual',
       connected: waSession.isActive(),
       phoneNumber: waSession.phoneNumber || null,
       hasQR: !!waSession.getLastQR(),
@@ -48,12 +48,12 @@ router.get('/qr', async (req, res) => {
 /**
  * PUT /api/whatsapp/mode
  * Cambia el modo de proveedor WhatsApp
- * Body: { mode: 'wa' | 'web' | 'twilio' | 'waba' }
+ * Body: { mode: 'manual' | 'web' }
  */
 router.put('/mode', async (req, res) => {
   try {
     const { mode } = req.body;
-    const validModes = ['wa', 'web', 'twilio', 'waba'];
+    const validModes = ['manual', 'web'];
     if (!validModes.includes(mode)) {
       return res.status(400).json({ error: `Modo inválido. Usar: ${validModes.join(', ')}` });
     }

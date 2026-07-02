@@ -119,7 +119,7 @@ async function iniciarWaSession(prisma) {
     const cfg = await prisma.configuracion.findUnique({
       where: { clave: 'whatsapp_provider_mode' }
     });
-    const mode = cfg?.valor || 'wa';
+    const mode = cfg?.valor || 'manual';
 
     // Solo iniciar sesión si el modo es 'web'
     if (mode !== 'web') {

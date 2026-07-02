@@ -1,6 +1,4 @@
-import { WaMeProvider } from './providers/wa.js';
-import { WabaProvider } from './providers/waba.js';
-import { TwilioProvider } from './providers/twilio.js';
+import { ManualProvider } from './providers/manual.js';
 import { WhatsAppWebProvider } from './providers/web.js';
 import { WhatsAppProvider } from './base.js';
 import { waSession } from './wa-session.js';
@@ -19,18 +17,16 @@ export class ProviderResolver {
     const cfg = {};
     configs.forEach(c => { cfg[c.clave] = c.valor; });
 
-    const mode = cfg.whatsapp_provider_mode || 'wa';
+    const mode = cfg.whatsapp_provider_mode || 'manual';
     const fallback = cfg.whatsapp_fallback_mode || 'on_error';
 
     let provider;
     switch (mode) {
-      case 'waba': provider = new WabaProvider(); break;
-      case 'twilio': provider = new TwilioProvider(); break;
       case 'web': provider = new WhatsAppWebProvider(); break;
-      case 'wa': provider = new WaMeProvider(); break;
+      case 'manual': provider = new ManualProvider(); break;
       default:
-        console.warn(`[ProviderResolver] Modo provider desconocido: "${mode}", usando wa.me`);
-        provider = new WaMeProvider();
+        console.warn(`[ProviderResolver] Modo provider desconocido: "${mode}", usando manual`);
+        provider = new ManualProvider();
     }
 
     return { provider, fallbackMode: fallback, mode };
@@ -58,9 +54,9 @@ export class ProviderResolver {
     }
 
     // fallbackMode = 'on_error' (default) or 'always'
-    const waProvider = new WaMeProvider();
+    const waProvider = new ManualProvider();
     const waResult = await waProvider.send({ telefono, mensaje, paciente });
-    console.log(`[ProviderResolver] Usando fallback wa.me (${fallbackMode})`);
+    console.log(`[ProviderResolver] Usando fallback manual (${fallbackMode})`);
     return {
       exito: waResult.exito,
       messageId: null,
@@ -77,8 +73,8 @@ export class ProviderResolver {
    *   - NO cae en wa.me deeplink cuando el provider primario falla
    *   - Devuelve exito:false si el envío real falla
    *   - Preserva el waUrl emitido por el provider activo cuando este es
-   *     exitoso (caso típico: provider = WaMeProvider en mode='wa', donde
-   *     el link wa.me ES el entregable de la operación)
+   *     exitoso (caso típico: provider = ManualProvider en mode='manual',
+   *     donde el link wa.me ES el entregable de la operación)
    *
    * Está pensado para flujos donde mentir con un exito:true es peligroso
    * (p.ej. recordatorios a pacientes que se persisten como 'enviado' en DB).

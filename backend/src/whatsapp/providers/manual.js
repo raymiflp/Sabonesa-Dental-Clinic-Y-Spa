@@ -1,7 +1,7 @@
 import { WhatsAppProvider } from '../base.js';
 const WA_BASE = 'https://wa.me';
 
-export class WaMeProvider extends WhatsAppProvider {
+export class ManualProvider extends WhatsAppProvider {
   async send({ telefono, mensaje, paciente }) {
     if (!telefono) {
       return { exito: false, messageId: null, error: 'Teléfono no proporcionado', waUrl: null };

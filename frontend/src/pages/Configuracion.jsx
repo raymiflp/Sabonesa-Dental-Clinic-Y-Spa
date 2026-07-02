@@ -15,7 +15,7 @@ export default function Configuracion() {
   const [whatsappStatus, setWhatsappStatus] = useState(null);
   const [qrData, setQrData] = useState(null);
   const [showQR, setShowQR] = useState(false);
-  const [providerMode, setProviderMode] = useState('wa');
+  const [providerMode, setProviderMode] = useState('manual');
   const [loadingStatus, setLoadingStatus] = useState(true);
 
   // Recordatorio state
@@ -48,7 +48,7 @@ export default function Configuracion() {
         setPlantillaRecordatorio(cfg.plantilla_recordatorio || '');
         setPlantillaConfirmacion(cfg.plantilla_confirmacion || '');
         setPlantillaCancelacion(cfg.plantilla_cancelacion || '');
-        setProviderMode(cfg.whatsapp_provider_mode || 'wa');
+        setProviderMode(cfg.whatsapp_provider_mode || 'manual');
       }
 
       if (status) {
@@ -109,7 +109,7 @@ export default function Configuracion() {
       setShowQR(false);
       setQrData(null);
       await api.updateWhatsappMode(mode);
-      toast.success(`Modo cambiado a ${mode === 'web' ? 'WhatsApp Web' : mode === 'wa' ? 'Link wa.me' : mode}`);
+      toast.success(`Modo cambiado a ${mode === 'web' ? 'WhatsApp Web' : mode === 'manual' ? 'Link wa.me' : mode}`);
       // Recargar status
       const status = await api.getWhatsappStatus().catch(() => null);
       if (status) setWhatsappStatus(status);
@@ -207,10 +207,8 @@ export default function Configuracion() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="wa">Link wa.me (genera enlace, sin enviar)</SelectItem>
+                <SelectItem value="manual">Manual (genera enlace wa.me, sin enviar)</SelectItem>
                 <SelectItem value="web">WhatsApp Web (Baileys) — enviar real</SelectItem>
-                <SelectItem value="twilio">Twilio API</SelectItem>
-                <SelectItem value="waba">Meta WABA (Business API)</SelectItem>
               </SelectContent>
             </Select>
           </div>
