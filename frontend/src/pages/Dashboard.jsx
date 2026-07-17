@@ -133,7 +133,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-muted-foreground">Cargando dashboard...</div>
+        <div className="text-muted-foreground">Cargando inicio...</div>
       </div>
     );
   }
@@ -141,7 +141,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">Inicio</h1>
         <p className="text-sm text-muted-foreground mt-1">Resumen general de la clínica</p>
       </div>
 

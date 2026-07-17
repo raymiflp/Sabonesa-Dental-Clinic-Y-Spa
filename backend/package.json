@@ -7,8 +7,12 @@
     "start": "npx prisma db push && node prisma/seed.js && node src/index.js",
     "db:push": "npx prisma db push",
     "db:seed": "node prisma/seed.js",
+    "db:seed:e2e": "node prisma/seed-e2e.js",
     "db:clean-demo": "node prisma/clean-demo.js",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.js"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",
@@ -26,6 +30,11 @@
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
-    "prisma": "^6.0.0"
+    "@testcontainers/postgresql": "^12.0.1",
+    "@vitest/coverage-v8": "^3.1.0",
+    "prisma": "^6.0.0",
+    "supertest": "^7.1.0",
+    "testcontainers": "^12.0.1",
+    "vitest": "^3.1.0"
   }
 }

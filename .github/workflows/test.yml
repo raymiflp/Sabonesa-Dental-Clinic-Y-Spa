@@ -1,0 +1,132 @@
+# ---------------------------------------------------------------------------
+# Tests — CI pipeline
+# ---------------------------------------------------------------------------
+# Runs on every push to main/develop and on every PR targeting main.
+#
+# Backend : Node 22 ESM, Express 4, Prisma 6 (mocked in tests), Vitest + Supertest
+# Frontend: React 19 + Vite 8 + shadcn/ui, Vitest + Testing Library + MSW
+#
+# Node version is read from the root .nvmrc (set to 20).
+# No database or external services are needed — backend tests mock Prisma
+# and frontend tests use MSW for API interception.
+# ---------------------------------------------------------------------------
+
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Backend
+  # -----------------------------------------------------------------------
+  test-backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx vitest run
+        env:
+          NODE_ENV: test
+
+  # -----------------------------------------------------------------------
+  # Backend — Integration tests with real PostgreSQL
+  # -----------------------------------------------------------------------
+  test-integration-backend:
+    name: Backend integration tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: betty_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Push database schema
+        run: npx prisma db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/betty_test
+
+      - name: Run integration tests
+        run: npx vitest run --config vitest.integration.config.js
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/betty_test
+          INTEGRATION_DATABASE_URL: postgresql://test:test@localhost:5432/betty_test
+
+  # -----------------------------------------------------------------------
+  # Frontend — tests first, then build to verify production readiness
+  # -----------------------------------------------------------------------
+  test-frontend:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npx vitest run
+
+      - name: Build for production
+        run: npx vite build

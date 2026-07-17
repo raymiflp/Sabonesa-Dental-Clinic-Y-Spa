@@ -11,7 +11,7 @@ import SyncIndicator from './SyncIndicator';
 import PasswordChangeModal from './PasswordChangeModal';
 
 const allNavItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Inicio', icon: Home },
   { to: '/agenda', label: 'Agenda', icon: Calendar },
   { to: '/historial', label: 'Historial Clínico', icon: ClipboardList },
   { to: '/crediticio', label: 'Historial Crediticio', icon: CreditCard },
@@ -138,7 +138,7 @@ export default function Layout() {
   };
 
   const breadcrumbMap = {
-    '/': 'Dashboard',
+    '/': 'Inicio',
     '/agenda': 'Agenda',
     '/historial': 'Pacientes',
     '/historial/detalle': 'Historial Clínico',
@@ -149,7 +149,7 @@ export default function Layout() {
 
   const buildBreadcrumbs = () => {
     const path = location.pathname;
-    const crumbs = [{ to: '/', label: 'Dashboard', icon: true }];
+    const crumbs = [{ to: '/', label: 'Inicio', icon: true }];
 
     if (path === '/') return crumbs;
 

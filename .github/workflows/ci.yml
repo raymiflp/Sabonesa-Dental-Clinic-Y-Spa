@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# CI — supplementary checks (lint)
+# ---------------------------------------------------------------------------
+# Runs on every push to main/develop and on every PR targeting main.
+#
+# Separated from test.yml so lint failures don't block test results and
+# vice versa — each job in its own workflow runs independently.
+# ---------------------------------------------------------------------------
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-frontend:
+    name: Frontend lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: './.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: './frontend/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint

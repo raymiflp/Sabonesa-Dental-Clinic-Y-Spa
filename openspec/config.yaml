@@ -2,11 +2,15 @@
 schema: spec-driven
 
 context: |
-  Tech stack: Node.js (ESM) + Express 4 + Prisma (SQLite) backend; React 19 + Vite 8 + Tailwind CSS v4 + shadcn/ui (base-nova) frontend.
-  Architecture: REST API (port 3001) + SPA. Backend follows routes → controllers pattern. Frontend uses react-router-dom for page routing, custom fetch-based api.js client.
-  Testing: No test runner configured in either package. No test files found. No coverage tool.
-  Style: ESLint v10 (frontend only), no formatter, no type checker (plain JS with JSX).
-  Database: SQLite via Prisma with models: Paciente, HistorialClinico, Cita, Crediticio, Procedimiento, CategoriaProcedimiento, Presupuesto, Recordatorio, Configuracion.
+  Tech stack: Node 22 (ESM) + Express 4 + Prisma 6 (PostgreSQL) backend;
+  React 19 + Vite 8 + Tailwind CSS v4 + shadcn/ui (base-nova) + React Router v7 frontend.
+  Architecture: REST API (port 3001) + SPA. Backend follows routes → controllers → services pattern.
+  Frontend uses react-router-dom v7 for page routing, custom fetch-based api.js client, context for auth.
+  DB: PostgreSQL via Prisma with 11 models: Paciente, HistorialClinico, Cita, Crediticio,
+  CategoriaProcedimiento, Procedimiento, Presupuesto, Usuario, Insumo, Configuracion, Recordatorio.
+  WhatsApp: Baileys library with cron-based reminders. File uploads: Cloudinary.
+  Auth: JWT with bcryptjs. Security: Helmet, express-rate-limit, CORS.
+  monorepo: backend/ (ESM, Node --watch), frontend/ (Vite 8, HMR).
 
 rules:
   proposal:
@@ -26,7 +30,7 @@ rules:
     test_command: ""
   verify:
     test_command: ""
-    build_command: "npm run build"
+    build_command: "cd frontend && npm run build"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
@@ -42,6 +46,8 @@ testing:
     available: false
     command: null
   quality:
-    linter: { available: true, command: "eslint .", scope: frontend }
+    linter: { available: true, command: "cd frontend && eslint .", scope: frontend }
     type_checker: { available: false, command: null }
     formatter: { available: false, command: null }
+
+detected: 2026-06-08

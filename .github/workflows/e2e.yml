@@ -1,0 +1,95 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: betty
+          POSTGRES_PASSWORD: betty
+          POSTGRES_DB: betty-e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://betty:betty@localhost:5432/betty-e2e
+
+      - name: Push Prisma schema
+        run: npx prisma db push
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://betty:betty@localhost:5432/betty-e2e
+
+      - name: Seed E2E test data
+        run: node prisma/seed-e2e.js
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://betty:betty@localhost:5432/betty-e2e
+
+      - name: Start backend
+        run: |
+          SKIP_RATE_LIMIT=true PORT=3001 DATABASE_URL="postgresql://betty:betty@localhost:5432/betty-e2e" node src/index.js &
+        working-directory: backend
+        env:
+          JWT_SECRET: test-jwt-secret-for-e2e
+
+      - name: Start frontend
+        run: |
+          npm run dev &
+        working-directory: frontend
+
+      - name: Wait for backend
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:3001/api/health > /dev/null && break
+            sleep 2
+          done
+
+      - name: Wait for frontend
+        run: |
+          for i in {1..15}; do
+            curl -s http://localhost:5173 > /dev/null && break
+            sleep 2
+          done
+
+      - name: Run Playwright tests
+        run: npx playwright test --config e2e/playwright.config.js
+        env:
+          DATABASE_URL: postgresql://betty:betty@localhost:5432/betty-e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
