@@ -8,6 +8,7 @@
 
 $ErrorActionPreference = "Stop"
 $BackendDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $BackendDir
 $TaskName = "BettyDental-Backend"
 $ScriptPath = Join-Path $BackendDir "start-local.ps1"
 
@@ -39,7 +40,7 @@ if ($existing) {
 $action = New-ScheduledTaskAction `
     -Execute "powershell.exe" `
     -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Normal -File `"$ScriptPath`"" `
-    -WorkingDirectory $BackendDir
+    -WorkingDirectory $ProjectRoot
 
 # Trigger: at user logon
 $trigger = New-ScheduledTaskTrigger -AtLogon -User $env:USERNAME

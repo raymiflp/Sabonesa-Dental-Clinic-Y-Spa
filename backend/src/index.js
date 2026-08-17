@@ -27,8 +27,11 @@ const prisma = new PrismaClient();
 
 // --- Security Middleware ---
 
-// Helmet: security headers
-app.use(helmet());
+// Helmet: security headers (relaxed CSP for local frontend serving)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 // E2E / test mode: skip rate limiting entirely
 const shouldSkipRateLimit = process.env.SKIP_RATE_LIMIT === 'true' || process.env.NODE_ENV === 'test';
@@ -63,6 +66,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use('/static', express.static(path.join(__dirname, '..', 'public')));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+// Servir frontend build (local deployment)
+const frontendDist = path.join(__dirname, '..', '..', 'frontend', 'dist');
+app.use(express.static(frontendDist));
+
 // Exponer prisma para los controladores
 app.use((req, res, next) => {
   req.prisma = prisma;
@@ -87,6 +94,11 @@ app.use('/api/whatsapp', authMiddleware, whatsappRoutes);
 app.use('/api/insumos', authMiddleware, insumosRoutes);
 app.use('/api/upload', authMiddleware, uploadRoutes);
 app.use('/api/cloudinary', authMiddleware, cloudinaryRoutes);
+
+// SPA fallback: serve frontend for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
 
 // Startup check: JWT_SECRET must be set in production
 if (!process.env.JWT_SECRET) {

@@ -1,11 +1,12 @@
 import { cachePut, cacheGet, queueAdd } from './lib/db';
 
 const DEV_API = 'http://localhost:3001';
-const PROD_API = 'https://amusing-fulfillment-production-1144.up.railway.app'; // Railway backend
 
-// VITE_API_URL env var overrides everything; fall back to DEV/PROD logic
+// VITE_API_URL env var overrides everything.
+// Dev mode: backend at localhost:3001
+// Production: empty string = same origin (backend serves frontend)
 const API_BASE = import.meta.env.VITE_API_URL
-  || (import.meta.env.DEV ? DEV_API : PROD_API);
+  || (import.meta.env.DEV ? DEV_API : '');
 export { API_BASE };
 
 const API = `${API_BASE}/api`;

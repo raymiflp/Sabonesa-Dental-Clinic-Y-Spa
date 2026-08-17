@@ -1,15 +1,18 @@
 #!/usr/bin/env pwsh
 # ============================================================
-# Betty Dental - Backend Local Startup
-# Installs dependencies, sets up DB, and starts the server.
-# Run manually or via Task Scheduler at login.
+# Betty Dental - Local Server Startup
+# Backend + Frontend served from a single server (port 3001).
+# Run from the PROJECT ROOT directory.
 # ============================================================
 param(
     [switch]$Silent  # -Silent for Task Scheduler (no pause on error)
 )
 
 $ErrorActionPreference = "Continue"
-$BackendDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $ScriptDir
+$BackendDir = Join-Path $ProjectRoot "backend"
+$FrontendDir = Join-Path $ProjectRoot "frontend"
 $LogFile = Join-Path $BackendDir "server.log"
 $MaxLogSize = 5MB
 
@@ -41,15 +44,15 @@ if (Test-Path $LogFile) {
 Clear-Host
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Magenta
-Write-Host "    Betty Dental - Backend Local Server" -ForegroundColor Magenta
+Write-Host "    Betty Dental - Local Server" -ForegroundColor Magenta
 Write-Host "  =========================================" -ForegroundColor Magenta
 Write-Host ""
 
-Write-Log "Starting Betty Dental backend..."
-Write-Log "Backend directory: $BackendDir"
+Write-Log "Starting Betty Dental..."
+Write-Log "Project root: $ProjectRoot"
 
-# --- Step 1: Check Node.js ---
-Write-Log "Step 1/6: Checking Node.js..."
+# === Step 1: Check Node.js ===
+Write-Log "Step 1/8: Checking Node.js..."
 try {
     $nodeVersion = & node --version 2>&1
     if ($LASTEXITCODE -ne 0) { throw "Node not found" }
@@ -65,8 +68,8 @@ try {
     exit 1
 }
 
-# --- Step 2: Check/create .env ---
-Write-Log "Step 2/7: Checking .env configuration..."
+# === Step 2: Check/create .env ===
+Write-Log "Step 2/8: Checking .env configuration..."
 $envFile = Join-Path $BackendDir ".env"
 $envExample = Join-Path $BackendDir ".env.ejemplo"
 
@@ -75,7 +78,6 @@ if (-not (Test-Path $envFile)) {
         Copy-Item $envExample $envFile
         Write-Log ".env created from .env.ejemplo"
     } else {
-        # Generate minimal .env
         @"
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="betty-dev-secret"
@@ -88,69 +90,109 @@ SKIP_RATE_LIMIT=true
     Write-Log ".env already exists"
 }
 
-# --- Step 3: Install dependencies ---
-Write-Log "Step 3/7: Installing dependencies..."
+# === Step 3: Install backend dependencies ===
+Write-Log "Step 3/8: Installing backend dependencies..."
 Set-Location $BackendDir
 
 if (-not (Test-Path "node_modules")) {
-    Write-Log "node_modules not found, running npm install..."
+    Write-Log "Running npm install (backend)..."
     & npm install 2>&1 | ForEach-Object { Write-Log "  $_" }
     if ($LASTEXITCODE -ne 0) {
-        Write-Log "npm install failed" "ERROR"
-        if (-not $Silent) {
-            Write-Host "Press any key to exit..." -ForegroundColor Yellow
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
+        Write-Log "Backend npm install failed" "ERROR"
         exit 1
     }
-    Write-Log "Dependencies installed"
+    Write-Log "Backend dependencies installed"
 } else {
-    Write-Log "node_modules exists, skipping install"
+    Write-Log "Backend node_modules exists, skipping"
 }
 
-# --- Step 4: Generate Prisma Client ---
-Write-Log "Step 4/7: Generating Prisma Client..."
+# === Step 4: Install frontend dependencies ===
+Write-Log "Step 4/8: Installing frontend dependencies..."
+Set-Location $FrontendDir
+
+if (-not (Test-Path "node_modules")) {
+    Write-Log "Running npm install (frontend)..."
+    & npm install 2>&1 | ForEach-Object { Write-Log "  $_" }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "Frontend npm install failed" "ERROR"
+        exit 1
+    }
+    Write-Log "Frontend dependencies installed"
+} else {
+    Write-Log "Frontend node_modules exists, skipping"
+}
+
+# === Step 5: Generate Prisma Client + push DB ===
+Write-Log "Step 5/8: Setting up database..."
+Set-Location $BackendDir
+
 & npx prisma generate 2>&1 | ForEach-Object { Write-Log "  $_" }
 if ($LASTEXITCODE -ne 0) {
-    Write-Log "prisma generate failed, attempting npm install first..."
+    Write-Log "prisma generate failed, retrying..." "WARN"
     & npm install 2>&1 | Out-Null
     & npx prisma generate 2>&1 | ForEach-Object { Write-Log "  $_" }
     if ($LASTEXITCODE -ne 0) {
-        Write-Log "prisma generate failed after retry" "ERROR"
+        Write-Log "prisma generate failed" "ERROR"
         exit 1
     }
 }
-Write-Log "Prisma Client generated"
 
-# --- Step 5: Push database schema ---
-Write-Log "Step 5/7: Syncing database schema..."
 & npx prisma db push 2>&1 | ForEach-Object { Write-Log "  $_" }
 if ($LASTEXITCODE -ne 0) {
-    Write-Log "prisma db push failed, trying with --accept-data-loss..."
+    Write-Log "Retrying with --accept-data-loss..."
     & npx prisma db push --accept-data-loss 2>&1 | ForEach-Object { Write-Log "  $_" }
     if ($LASTEXITCODE -ne 0) {
         Write-Log "Database push failed" "ERROR"
         exit 1
     }
 }
-Write-Log "Database schema synced"
+Write-Log "Database synced"
 
-# --- Step 6: Seed database if empty ---
-Write-Log "Step 6/7: Checking if seed is needed..."
+# === Step 6: Seed if needed ===
+Write-Log "Step 6/8: Checking seed..."
 $dbFile = Join-Path $BackendDir "prisma\dev.db"
 $dbExists = (Test-Path $dbFile) -and (Get-Item $dbFile).Length -gt 10KB
 if ($dbExists) {
-    Write-Log "Database file exists and has data, skipping seed"
+    Write-Log "Database has data, skipping seed"
 } else {
-    Write-Log "Database is empty or missing, running seed..."
+    Write-Log "Seeding database..."
     & node prisma/seed.js 2>&1 | ForEach-Object { Write-Log "  $_" }
     Write-Log "Seed completed"
 }
 
-# --- Step 7: Get local IP and start server ---
-Write-Log "Step 7/7: Starting server..."
+# === Step 7: Build frontend ===
+Write-Log "Step 7/8: Building frontend..."
+Set-Location $FrontendDir
 
-# Get local IP address
+$distDir = Join-Path $FrontendDir "dist"
+$needsBuild = $true
+
+if (Test-Path $distDir) {
+    $distIndex = Join-Path $distDir "index.html"
+    if (Test-Path $distIndex) {
+        $distAge = (Get-Date) - (Get-Item $distIndex).LastWriteTime
+        if ($distAge.TotalHours -lt 24) {
+            $needsBuild = $false
+            Write-Log "Frontend dist is recent ($([math]::Round($distAge.TotalMinutes))min old), skipping build"
+        }
+    }
+}
+
+if ($needsBuild) {
+    Write-Log "Building frontend (npm run build)..."
+    & npm run build 2>&1 | ForEach-Object { Write-Log "  $_" }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Log "Frontend build failed" "ERROR"
+        exit 1
+    }
+    Write-Log "Frontend built successfully"
+}
+
+# === Step 8: Start server ===
+Write-Log "Step 8/8: Starting server..."
+Set-Location $BackendDir
+
+# Get local IP
 $localIP = "localhost"
 try {
     $adapters = Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
@@ -162,30 +204,30 @@ try {
         $localIP = ($adapters | Select-Object -First 1).IPAddress
     }
 } catch {
-    Write-Log "Could not detect local IP, using localhost" "WARN"
+    Write-Log "Could not detect local IP" "WARN"
 }
 
 Write-Host ""
 Write-Host "  =========================================" -ForegroundColor Green
-Write-Host "    Server starting on port 3001..." -ForegroundColor Green
+Write-Host "    Betty Dental is running!" -ForegroundColor Green
 Write-Host "  =========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Local:   http://localhost:3001" -ForegroundColor White
 Write-Host "  Network: http://${localIP}:3001" -ForegroundColor White
 Write-Host ""
-Write-Host "  Frontend VITE_API_URL = http://${localIP}:3001" -ForegroundColor Yellow
+Write-Host "  Abre ese enlace en cualquier navegador" -ForegroundColor Yellow
+Write-Host "  en la misma red WiFi de la clinica." -ForegroundColor Yellow
 Write-Host ""
-Write-Log "Server starting on http://${localIP}:3001"
-Write-Log "Log file: $LogFile"
-Write-Host "  Press Ctrl+C to stop the server" -ForegroundColor DarkGray
+Write-Log "Server: http://${localIP}:3001"
+Write-Log "Log: $LogFile"
+Write-Host "  Ctrl+C para detener" -ForegroundColor DarkGray
 Write-Host ""
 
-# Start server (keeps running until Ctrl+C)
+# Start server (runs until Ctrl+C)
 & node src/index.js 2>&1 | ForEach-Object {
     $ts = Get-Date -Format "HH:mm:ss"
     Write-Host "[$ts] $_"
     Add-Content -Path $LogFile -Value "[$ts] $_" -ErrorAction SilentlyContinue
 }
 
-# Server stopped
 Write-Log "Server stopped"
