@@ -15,6 +15,11 @@ backend/uploads/*
 # Database
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+backend/prisma/dev.db.backup
+
+# Server logs
+backend/server.log
+backend/server.log.*.bak
 
 # OS files
 .DS_Store
